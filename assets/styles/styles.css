@@ -1,0 +1,54 @@
+:root {
+  --body-background: hsl(220, 100%, 96%);
+  --body-color-light: hsl(241, 100%, 89%);
+  --body-color-dark: hsl(223, 30%, 89%);
+  --main-gradient: linear-gradient(hsl(252, 100%, 67%), hsl(241, 81%, 54%));
+  --dark-gradient: linear-gradient(hsl(256, 71%, 46%), hsla(241, 71%, 46%, 0));
+  --reaction-color: hsl(0, 100%, 67%);
+  --reaction-color-light: hsl(0, 100%, 98%);
+  --memory-color: hsl(40, 100%, 56%);
+  --memory-color-light: hsl(40, 100%, 97%);
+  --verbal-color: hsl(166, 100%, 37%);
+  --verbal-color-light: hsl(166, 53%, 97%);
+  --visual-color: hsl(234, 85%, 45%);
+  --visual-color-light: hsl(234, 53%, 97%);
+}
+html {
+  box-sizing: border-box;
+}
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  margin: 0;
+  background: var(--body-background);
+}
+.results-summary {
+  background-color: white;
+}
+.results-summary__result {
+  background: var(--main-gradient);
+}
+.results-summary__score {
+  background: var(--dark-gradient);
+}
+footer {
+  margin-top: 2rem;
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: end;
+}
+.attribution {
+  font-size: 0.75rem;
+  margin: 0;
+}
+.attribution a {
+  color: navy;
+}
+/*# sourceMappingURL=./styles.css.map */
