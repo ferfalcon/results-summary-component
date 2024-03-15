@@ -21,12 +21,28 @@ html {
 *::after {
   box-sizing: inherit;
 }
+.ff-body {
+  font-family: "Hanken Grotesk", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+.fw-bold {
+  font-weight: 700;
+}
+.fw-extra-bold {
+  font-weight: 800;
+}
 body {
   display: flex;
   flex-direction: column;
   min-height: 100svh;
   margin: 0;
   background: var(--body-background);
+  font-family: "Hanken Grotesk", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
 }
 .results-summary {
   background-color: white;

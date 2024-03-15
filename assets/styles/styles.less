@@ -12,7 +12,6 @@
 	--verbal-color-light: hsl(166, 53%, 97%);
 	--visual-color: hsl(234, 85%, 45%);
 	--visual-color-light: hsl(234, 53%, 97%);
-
 }
 
 html {
@@ -23,12 +22,28 @@ html {
   box-sizing: inherit;
 }
 
+.ff-body {
+  font-family: "Hanken Grotesk", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.fw-bold {
+	font-weight: 700;
+}
+
+.fw-extra-bold {
+	font-weight: 800;
+}
+
 body {
 	display: flex;
 	flex-direction: column;
 	min-height: 100svh;
 	margin: 0;
 	background: var(--body-background);
+	.ff-body;
 }
 
 .results-summary {
