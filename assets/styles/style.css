@@ -23,7 +23,7 @@ html {
 }
 
 .ff-body {
-  font-family: "Hanken Grotesk", sans-serif;
+  
   font-optical-sizing: auto;
   font-weight: 500;
   font-style: normal;
@@ -43,7 +43,7 @@ body {
 	min-height: 100svh;
 	margin: 0;
 	background: var(--body-background);
-	.ff-body;
+	font-family: "Hanken Grotesk", sans-serif;
 }
 
 .results-summary {
