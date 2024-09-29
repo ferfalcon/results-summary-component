@@ -1,0 +1,6 @@
+(function(){const r=document.createElement("link").relList;if(r&&r.supports&&r.supports("modulepreload"))return;for(const e of document.querySelectorAll('link[rel="modulepreload"]'))c(e);new MutationObserver(e=>{for(const o of e)if(o.type==="childList")for(const s of o.addedNodes)s.tagName==="LINK"&&s.rel==="modulepreload"&&c(s)}).observe(document,{childList:!0,subtree:!0});function n(e){const o={};return e.integrity&&(o.integrity=e.integrity),e.referrerPolicy&&(o.referrerPolicy=e.referrerPolicy),e.crossOrigin==="use-credentials"?o.credentials="include":e.crossOrigin==="anonymous"?o.credentials="omit":o.credentials="same-origin",o}function c(e){if(e.ep)return;e.ep=!0;const o=n(e);fetch(e.href,o)}})();async function i(t){try{const r=await fetch(t);if(!r.ok)throw new Error(`HTTP error! statis: ${r.status} on ${t}`);return await r.json()}catch(r){throw console.log("Error fectching the JSON:",r),r}}function a(t){u(t.title),d(Object.keys(t)[3]);let r="";t.summary.forEach(n=>{r+=`
+			<div>
+				<dt>${n.category}</dt>
+				<dd><b>${n.score}</b> / 100</dd>
+			</div>
+		`}),document.querySelector("[data-summary]").innerHTML=r}function d(t){document.querySelector("[data-summary-heading]").textContent=t}function u(t){document.querySelector("[data-heading]").textContent=t}const f="./data.json";i(f).then(t=>{a(t)});
