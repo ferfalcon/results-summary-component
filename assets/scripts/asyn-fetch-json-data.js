@@ -8,7 +8,7 @@ export default async function fetchJsonData(Url) {
 		return dataJson;
 	}
 	catch (error) {
-		console.log('Error fectching the JSON:', error)
+		console.log('Error fectching the JSON:', error);
 		throw error;
 	}
 }

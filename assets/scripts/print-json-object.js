@@ -1,15 +1,27 @@
-export default function printJsonObject(jsonObject) {
-	let wrapper = document.createElement("div");
-	const main = document.querySelector('main');
-	main.append(wrapper);
+const main = document.querySelector('main');
+const wrapper = document.querySelector('[data-summary]');
 
-	// console.log(jsonObject)
-	let item = '';
-	item += `
-		<p>${jsonObject.name}</p>
-		<p>${jsonObject.age}</p>
-		<p>${jsonObject.description}</p>
-		<p>${jsonObject.age}</p>
-	`;
-	wrapper.innerHTML += item;
+export default function printJsonObject(jsonObject) {
+	writeHeading(jsonObject.title);
+	writeTableTitle(Object.keys(jsonObject)[3]);
+
+	let summaryItem = '';
+	jsonObject.summary.forEach(item => {
+		summaryItem += `
+			<div>
+				<dt>${item.category}</dt>
+				<dd><b>${item.score}</b> / 100</dd>
+			</div>
+		`;
+	});
+	wrapper.innerHTML = summaryItem;
+}
+
+function writeTableTitle(text) {
+	document.querySelector('[data-summary-heading]').textContent = text;
+}
+
+function writeHeading(text) {
+	document.querySelector('[data-heading]').textContent = text;
+	
 }
