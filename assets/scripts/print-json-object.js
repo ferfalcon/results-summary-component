@@ -1,6 +1,3 @@
-const main = document.querySelector('main');
-const wrapper = document.querySelector('[data-summary]');
-
 export default function printJsonObject(jsonObject) {
 	writeHeading(jsonObject.title);
 	writeTableTitle(Object.keys(jsonObject)[3]);
@@ -14,7 +11,7 @@ export default function printJsonObject(jsonObject) {
 			</div>
 		`;
 	});
-	wrapper.innerHTML = summaryItem;
+	document.querySelector('[data-summary]').innerHTML = summaryItem;
 }
 
 function writeTableTitle(text) {
