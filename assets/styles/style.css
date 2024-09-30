@@ -63,7 +63,11 @@ body {
 
 .results-summary__score {
 	background: var(--dark-gradient);
-	margin: 0;
+	margin: auto;
+	aspect-ratio: 1;
+	max-width: 140px;
+	border-radius: 100%;
+	align-content: center;
 }
 
 .results-summary__user-score {

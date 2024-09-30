@@ -7,5 +7,4 @@ const dataUrl = './data.json';
 loadData(dataUrl)
 .then (data => {
 	printObjectData(data);
-	// console.table(data);
 })
