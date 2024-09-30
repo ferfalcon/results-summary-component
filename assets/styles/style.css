@@ -54,6 +54,8 @@ body {
 	text-align: center;
 	color: var(--body-color-light);
 	background: var(--main-gradient);
+	display: grid;
+	gap: 1rem;
 }
 
 .results-summary__title {
@@ -65,6 +67,7 @@ body {
 	background: var(--dark-gradient);
 	margin: auto;
 	aspect-ratio: 1;
+	width: 100%;
 	max-width: 140px;
 	border-radius: 100%;
 	align-content: center;
@@ -83,6 +86,32 @@ body {
 
 .results-summary__description {
 	margin: 0;
+}
+
+.results-summary__data-table-heading {
+	margin: 0;
+}
+
+.results-summary__data-table {
+	margin: 0;
+	display: grid;
+	gap: 1rem;
+}
+
+.results-summary__data-table-row {
+	display: grid;
+	padding: 1rem;
+	grid-template-columns: 1fr 1fr;
+	background: gainsboro;
+	border-radius: .75rem;
+
+	dt {
+		display: flex;
+	}
+
+	dd {
+		margin: 0 0 0 auto;
+	}
 }
 
 footer {

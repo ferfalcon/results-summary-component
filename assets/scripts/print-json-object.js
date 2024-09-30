@@ -31,8 +31,11 @@ function writeSummaryTable(summaryData) {
 	let summaryItem = ``;
 	summaryData.forEach( item => {
 		summaryItem += `
-			<div>
-				<dt>${item.category}</dt>
+			<div class="results-summary__data-table-row">
+				<dt>
+					<img src="${item.icon}" alt="" height="20" width="20" />
+					${item.category}
+				</dt>
 				<dd><b>${item.score}</b> / 100</dd>
 			</div>
 		`;
