@@ -4,9 +4,9 @@
 
 This document converts the visual and UX definition in `DESIGN.md` into functional, technical, and testable requirements for the Results Summary project.
 
-The Figma file remains the visual source of truth. `DESIGN.md` remains the design-intent source of truth. Explicit decisions in this specification override unresolved placeholders or accessibility problems in Figma.
+The Figma file remains the source of truth for the original visual design. `DESIGN.md` records design intent and reviewed visual decisions. Explicit requirements in this specification override unresolved Figma placeholders and documented accessibility failures.
 
-This specification defines the required behavior. It does not prescribe the final file structure or implementation sequence; those belong in `PLAN.md`.
+This specification defines required behavior and constraints. File structure and implementation sequence belong in `PLAN.md`.
 
 ---
 
@@ -16,55 +16,72 @@ The project is a single-page Vite application implemented with semantic HTML, Ty
 
 ### 1.1 Required technical constraints
 
-- Use the repository's existing Vite and TypeScript setup.
+- Use the existing application under `frontend/`.
+- Use the repository’s existing Vite and TypeScript setup.
 - Do not add a UI framework or CSS framework.
-- Use CSS custom properties for reusable colors, spacing, typography, radii, gradients, and shadow values.
-- Load Hanken Grotesk from the local font files already included in the repository.
-- Use the local SVG category icons already included under `docs/design/images/`.
+- Use semantic HTML generated or assembled by TypeScript.
+- Use CSS custom properties for reusable colors, spacing, typography, radii, gradients, shadow, and layout values.
+- Use the local Hanken Grotesk design-source files already included in the repository.
+- Copy the exact font and SVG assets needed at runtime into an application-owned location inside `frontend/`; do not make production rendering depend on `docs/design/` paths.
 - Do not reference temporary Figma asset URLs in production code.
-- Render the visible content from one structured data source rather than duplicating category markup and values manually.
-- Use a local JSON file imported at build time. The initial implementation does not require a network request.
+- Render visible content from one structured data source rather than duplicating category values manually.
+- Store the default content in a local JSON file imported at build time.
+- Enable TypeScript JSON-module resolution in `frontend/tsconfig.json`.
+- Validate the imported JSON at runtime before rendering; do not rely on a type assertion as validation.
+- Do not add a validation dependency for this small fixed schema unless later requirements justify one.
 - Support current evergreen browsers.
 
-### 1.2 Required decisions resolved by this specification
+### 1.2 Resolved project decisions
 
 | Topic | Requirement |
 |---|---|
 | Action label | Use `Continue` |
-| Overall score | Store it independently; do not derive it from the category average |
+| Overall score | Store independently; do not derive from category average |
+| Maximum score | Exactly `100` for the first release |
 | Visual category score | Use `73` for Visual, matching Figma |
-| Responsive switch | Switch to the horizontal card at `700px` |
-| Figma `Active` button variant | Use the gradient treatment for hover and pressed states |
-| Keyboard focus | Add a separate visible focus ring; the gradient alone is insufficient |
-| Data delivery | Import local JSON at build time; no loading state is required |
-| Invalid data | Render a safe fallback instead of partial or misleading scores |
-| Contrast failures | Apply the accessible color exceptions defined in this document |
-| Secondary score text | Use a solid accessible color instead of Figma's 50%-opacity navy |
+| Categories | Exactly the four known categories in Figma order |
+| Responsive switch | Use the horizontal card at `700px` and above |
+| Figma Active button variant | Use the gradient for hover and pressed states |
+| Keyboard focus | Add a separate visible focus ring |
+| Data delivery | Import local JSON at build time; no loading state |
+| Invalid data | Render one safe fallback instead of partial results |
+| Category label contrast | Use the accessible label colors defined here |
+| Secondary score contrast | Use solid `#5F677B`, not reduced opacity |
+| Result heading contrast | Use white instead of Figma lavender |
+| Runtime assets | Copy exact source assets into `frontend/` runtime assets |
 
 ---
 
 ## 2. Page and component responsibilities
 
-The names below describe logical responsibilities. They do not require a specific framework or one-file-per-component architecture.
+The names below describe logical responsibilities. They do not require a framework or a one-file-per-component architecture.
 
-### 2.1 Page shell
+### 2.1 Document shell
+
+The document shell shall:
+
+- Set `<html lang="en">`.
+- Provide a meaningful document title such as `Results summary`.
+- Mount the Vite application into the existing application root.
+- Avoid unrelated navigation, footer content, attribution, or decoration in the initial scope.
+
+### 2.2 Page shell
 
 The page shell shall:
 
-- Provide the document's main landmark.
+- Provide exactly one `<main>` landmark.
 - Mount one Results Summary instance.
-- Control page-level background, responsive centering, outer padding, and vertical overflow.
-- Use natural page scrolling when the component is taller than the viewport.
-- Avoid adding unrelated navigation, footer content, or decorative content.
+- Control page background, responsive centering, outer padding, and vertical overflow.
+- Use safe centering so content is not clipped above or below short viewports.
+- Use natural page scrolling when content exceeds the viewport.
 
-### 2.2 Results Summary
+### 2.3 Results Summary
 
 The Results Summary shall:
 
-- Receive or import one complete `ResultsSummaryData` object.
-- Validate the data before rendering the score UI.
+- Receive one validated `ResultsSummaryData` object.
 - Coordinate the result overview, summary heading, category collection, and primary action.
-- Preserve the reading order at every viewport width:
+- Preserve this DOM and reading order at every viewport width:
   1. Result heading
   2. Overall score
   3. Rating
@@ -72,51 +89,56 @@ The Results Summary shall:
   5. Summary heading
   6. Category scores
   7. Continue action
-- Change visual layout without changing DOM reading order.
-- Render a visible fallback when the data is invalid.
+- Change visual layout without changing DOM order.
+- Render either the complete ready state or the invalid-data fallback.
+- Never render partial score data.
 
-### 2.3 Result overview
+### 2.4 Result overview
 
 The result overview shall:
 
 - Display the result heading, overall score, maximum score, rating, and comparison message.
-- Present the score as the dominant visual element.
-- Expose one coherent accessible score phrase such as `76 out of 100`.
-- Use the overall score supplied by the data model without recalculating it from categories.
-- Render the comparison sentence from the percentile value.
+- Present the overall score as the dominant visual element.
+- Expose the score as one coherent accessible phrase such as `76 out of 100`.
+- Use the supplied overall score without recalculating it from categories.
+- Construct the English comparison sentence from the percentile value.
+- Center its default content horizontally and vertically in the wide layout.
 
-### 2.4 Summary panel
+### 2.5 Summary panel
 
 The summary panel shall:
 
-- Display the `Summary` heading.
-- Render category entries from the data array in source order.
-- Keep the score values visually aligned on the trailing edge.
-- Place the Continue action after the complete category collection.
-- Expand naturally when content or category count requires additional height.
+- Display the summary heading.
+- Render category entries by iterating over the validated data array in source order.
+- Align score phrases to the trailing edge.
+- Place the Continue action after the category collection.
+- Center its default content vertically in the wide layout.
+- Expand naturally when text reflow increases its height.
 
-### 2.5 Category score item
+### 2.6 Category score item
 
 Each category item shall:
 
 - Display one decorative category icon.
-- Display one visible text label.
+- Display one visible category label.
 - Display the achieved score and maximum score.
-- Derive icon, background, icon color, and accessible label color from its category identifier.
-- Use a minimum height of `56px`, but grow if text wrapping requires more space.
+- Derive icon, row background, icon color, and accessible label color from the category ID.
+- Use a minimum height of `56px`.
+- Grow when text spacing or wrapping requires more height.
 - Keep the numeric score phrase on one line.
-- Remain understandable when the icon fails to load.
+- Reserve the icon box even when the asset fails.
+- Remain understandable without the icon.
 
-### 2.6 Continue action
+### 2.7 Continue action
 
 The Continue action shall:
 
 - Be a native `<button type="button">`.
-- Use the visible label `Continue`.
-- Expose a single integration boundary for a future continue handler.
-- Invoke a supplied handler once per activation.
-- Cause no form submission, page reload, or navigation when no handler is supplied.
-- Support pointer, keyboard, and touch activation.
+- Use the visible label supplied by valid data; the default value is `Continue`.
+- Expose one integration boundary for a future callback.
+- Invoke a supplied callback once for each native activation.
+- Cause no form submission, page reload, or navigation when no callback is supplied.
+- Support pointer, keyboard, and touch activation through native behavior.
 
 ---
 
@@ -140,14 +162,21 @@ export interface ScoreCategory {
 export interface ResultsSummaryData {
   resultHeading: string;
   score: number;
-  maximumScore: number;
+  maximumScore: 100;
   rating: string;
   percentile: number;
   summaryHeading: string;
   actionLabel: string;
-  categories: readonly ScoreCategory[];
+  categories: readonly [
+    ScoreCategory,
+    ScoreCategory,
+    ScoreCategory,
+    ScoreCategory,
+  ];
 }
 ```
+
+The runtime validator, not the TypeScript interface alone, determines whether imported JSON is valid.
 
 ### 3.2 Required default content
 
@@ -169,22 +198,30 @@ export interface ResultsSummaryData {
 }
 ```
 
-The rendered comparison sentence shall be:
+The default comparison sentence shall render as:
 
 > You scored higher than 65% of the people who have taken these tests.
 
-### 3.3 Data rules
+### 3.3 Validation rules
 
+The validator shall reject the complete object when any rule fails.
+
+- The root value must be a non-null object.
 - `resultHeading`, `rating`, `summaryHeading`, `actionLabel`, and every category `label` must contain non-whitespace text.
-- `maximumScore` must be a positive integer.
-- `score` and every category score must be integers from `0` through `maximumScore`, inclusive.
+- `maximumScore` must equal the integer `100`.
+- `score` and each category score must be integers from `0` through `100`, inclusive.
 - `percentile` must be an integer from `0` through `100`, inclusive.
-- Category identifiers must be unique.
-- The required project dataset contains exactly four categories in the Figma order.
-- Rendering must iterate over the array; it must not hardcode four separate row templates.
+- `categories` must be an array of exactly four entries.
+- Category IDs must appear exactly once each.
+- Category order must be:
+  1. `reaction`
+  2. `memory`
+  3. `verbal`
+  4. `visual`
+- Unknown IDs, missing IDs, duplicate IDs, additional IDs, and a different category count are invalid.
+- Invalid numeric values must not be rounded or clamped.
 - The overall score must not be calculated from category values.
-- Invalid numeric values must not be silently clamped or rounded.
-- Invalid data shall trigger the fallback state.
+- The renderer must still iterate over the validated category array; it must not contain four hand-written row templates.
 
 ### 3.4 Category presentation mapping
 
@@ -195,13 +232,31 @@ The rendered comparison sentence shall be:
 | `verbal` | Speech bubble | `#F2FCF9` | `#00BB8F` | `#007A5E` |
 | `visual` | Eye | `#F3F4FD` | `#1125D6` | `#1125D6` |
 
-The darker label colors are intentional accessibility deviations from Figma. The original brighter colors remain on decorative icons to preserve category identity.
+The darker label colors are intentional accessibility deviations from Figma. Bright category accents remain on decorative icons.
 
 Across every category row:
 
 - The achieved score shall use `#303B59`.
 - The slash and maximum score shall use solid `#5F677B`.
-- The maximum score must not use Figma's `50%` opacity treatment, which does not provide sufficient contrast on the pale row backgrounds.
+- The maximum score shall not use Figma’s 50%-opacity treatment.
+
+### 3.5 Runtime asset mapping
+
+Implementation shall create application-owned runtime copies of:
+
+- Hanken Grotesk font file or files
+- Reaction SVG
+- Memory SVG
+- Verbal SVG
+- Visual SVG
+- Favicon, when used
+
+Requirements:
+
+- Preserve the exact source asset bytes.
+- Keep design-source assets under `docs/design/` unchanged.
+- Import or serve runtime assets from inside `frontend/`.
+- Reserve explicit icon dimensions to avoid layout shift.
 
 ---
 
@@ -209,10 +264,11 @@ Across every category row:
 
 ### 4.1 Supported range
 
-- The interface shall work without horizontal scrolling from `320px` viewport width upward.
-- The layout shall remain coherent on large screens beyond the `1440px` Figma frame.
-- The layout shall reflow correctly at `200%` browser zoom.
-- The `700px` breakpoint applies to layout and responsive type changes.
+- The interface shall work without horizontal page scrolling from `320px` viewport width upward.
+- The layout shall remain coherent beyond the `1440px` desktop reference.
+- The layout shall support an effective CSS viewport of `320px` at high browser zoom.
+- The layout and responsive typography switch at `700px`.
+- The exact threshold shall be visually checked at `699px`, `700px`, and `701px`.
 
 ### 4.2 Narrow layout: below `700px`
 
@@ -221,31 +277,37 @@ The page shall use the mobile composition.
 #### Page shell
 
 - Background: white.
-- The component begins at the top of the page rather than being vertically centered.
-- The page shall provide approximately `30px` of bottom breathing room at the `375px` reference width.
-- Short landscape viewports shall remain vertically scrollable.
+- The component begins at the top of the page.
+- The page does not vertically center the component.
+- Short portrait and landscape viewports remain vertically scrollable.
+- The default `375 × 809` composition leaves approximately `30px` of viewport space below the designed content; this is not fixed component padding.
 
 #### Result overview
 
-- Width: `100%` of the viewport or containing page.
-- Minimum height at the `375px` reference width: `356px`.
+- Inline size: `100%` of the viewport or page container.
+- Default minimum height at `375px`: `356px`.
 - Top corners: square.
 - Bottom corners: `32px` radius.
-- Internal horizontal alignment: centered.
+- Shadow: `0 30px 60px rgb(61 108 236 / 15%)`.
+- Content alignment: centered horizontally.
 - Internal content maximum width: `260px`.
-- Default vertical inset: `32px`.
+- Default block inset: `32px`.
 - Primary internal gap: `24px`.
+- Rating-to-message gap: `8px`.
 - Score circle: `140 × 140px`.
-- The section may grow taller when text wraps or user text settings require it.
+- The section grows when text or accessibility settings require it.
 
 #### Summary panel
 
-- Width: `100%` of the available page width.
-- Horizontal inset shall use a fluid gutter that resolves to `30px` at `375px` and does not become smaller than `24px` at supported widths.
-- Gap from result overview: `24px`.
-- Gap between summary heading, category list, and button: `24px`.
+- Inline size: `100%`.
+- Use a fluid inline gutter equivalent to `clamp(24px, 8vw, 30px)` or behavior that produces the same constraints.
+- The gutter resolves to approximately `30px` at `375px`.
+- The gutter never becomes smaller than `24px` in the supported range.
+- Gap below result overview: `24px`.
+- Major gap between summary heading, category list, and button: `24px`.
 - Category row gap: `16px`.
-- Button width: `100%` of the summary content area.
+- Button inline size: `100%` of summary content.
+- Provide sufficient bottom spacing for the button focus ring and normal page breathing room.
 
 #### Mobile typography
 
@@ -255,72 +317,81 @@ The page shall use the mobile composition.
 - Rating: `24px`, weight `700`, line height `130%`.
 - Comparison message: `16px`, weight `500`, line height `130%`.
 - Summary heading: `18px`, weight `700`, line height `130%`.
-- Category label and value: `16px`, weights `500` and `700` respectively.
+- Category label: `16px`, weight `500`, line height `130%`.
+- Category score: `16px`, weight `700`, line height `130%`.
 - Button: `18px`, weight `700`, line height `130%`.
 
 ### 4.3 Wide layout: `700px` and above
 
-The page shall use the tablet/desktop card composition.
+The page shall use the tablet/desktop composition.
 
 #### Page shell
 
 - Background: `#F3F4FD`.
 - Minimum block size: `100svh`.
-- The card shall appear horizontally and vertically centered when it fits in the viewport.
-- The page shall preserve at least `32px` vertical breathing room and approximately `40px` horizontal breathing room.
-- When the card is taller than the available viewport, it shall remain reachable through normal page scrolling and must not be clipped above or below the viewport.
+- Default page padding: at least `32px` block and approximately `40px` inline.
+- The card is safely centered horizontally and vertically when the card plus required padding fits.
+- When the card does not fit, alignment falls back to normal top-to-bottom flow and scrolling.
+- Vertical centering must never make the top of the card unreachable.
 
 #### Composite card
 
-- Maximum width: `736px`.
-- At the `768px` reference viewport, target width: approximately `686–688px`.
+- Inline size: `100%` of the padded page area.
+- Maximum inline size: `736px`.
+- At a `768px` viewport with `40px` side padding, target width: approximately `688px`, within the Figma tolerance for `686px`.
 - Default minimum height: `512px`.
-- Height shall expand naturally for content reflow.
+- Height expands naturally.
 - Corner radius: `32px`.
 - Background: white.
 - Shadow: `0 30px 60px rgb(61 108 236 / 15%)`.
 - Layout: two approximately equal columns.
-- Both columns shall stretch to the same resulting height.
+- Both columns stretch to the same resulting height.
+- Do not use absolute positioning for the primary layout.
 
 #### Result overview
 
 - Occupies the first column.
-- Has a `32px` radius on all four corners.
+- Has `32px` radius on all four corners.
+- Centers default content horizontally and vertically.
 - Internal content maximum width: `260px`.
 - Score circle: `200 × 200px`.
 - Primary internal gap: `32px`.
-- Rating-to-description gap: `16px`.
+- Rating-to-message gap: `16px`.
 
 #### Summary panel
 
 - Occupies the second column.
-- Internal horizontal inset shall scale between approximately `24px` and `40px` so the content is about `269px` wide at `768px` and `288px` wide at the desktop maximum.
-- Internal vertical alignment: centered when the default content fits.
-- Gap between heading, category list, and button: `32px`.
+- Centers default content vertically.
+- Internal inline inset scales from approximately `24px` at the narrow end to `40px` at the desktop maximum.
+- Summary content is approximately `269px` wide at the `768px` reference and `288px` wide at the desktop maximum.
+- Major gap between summary heading, category list, and button: `32px`.
 - Category row gap: `16px`.
-- Button width: `100%` of the summary content width.
+- Button inline size: `100%`.
 
 #### Wide typography
 
-- Result and summary headings: `24px`, weight `700`, line height `130%`.
+- Result heading and summary heading: `24px`, weight `700`, line height `130%`.
 - Score: `72px`, weight `800`, line height `100%`.
 - Maximum score: `18px`, weight `700`, line height `130%`.
 - Rating: `32px`, weight `700`, line height `130%`.
 - Comparison message: `18px`, weight `500`, line height `130%`.
-- Category label and value: `18px`, weights `500` and `700` respectively.
+- Category label: `18px`, weight `500`, line height `130%`.
+- Category score: `18px`, weight `700`, line height `130%`.
 - Button: `18px`, weight `700`, line height `130%`.
 
 ### 4.4 Shared dimensional rules
 
-- Category rows: minimum height `56px`, radius `12px`.
-- Category icon layout box: approximately `32 × 32px`.
+- Category row minimum height: `56px`.
+- Category row radius: `12px`.
+- Category icon reserved box: approximately `32 × 32px`.
 - Icon-to-label gap: `8px`.
 - Row leading inset: `8px`.
 - Row trailing inset: `16px`.
-- Score-to-maximum gap: `8px`.
-- Button: minimum height `56px`, pill radius.
+- Achieved-score-to-maximum gap: `8px`.
+- Button minimum height: `56px`.
+- Button shape: pill.
 - Use logical properties for inline and block spacing where practical.
-- Do not use absolute positioning for the primary responsive layout.
+- Do not use fixed text-container heights.
 
 ---
 
@@ -328,7 +399,7 @@ The page shall use the tablet/desktop card composition.
 
 ### 5.1 Ready state
 
-The ready state renders the complete result overview, all category rows, and the Continue button from valid data.
+The ready state renders the complete result overview, all four category rows, and the Continue button from valid data.
 
 This is the only Figma-defined content state.
 
@@ -337,129 +408,160 @@ This is the only Figma-defined content state.
 When validation fails:
 
 - Do not render partial scores.
-- Render a concise visible message: `Results are unavailable.`
-- Keep the message inside the page's main landmark.
-- Log a descriptive development error identifying the invalid field when practical.
-- Do not show the Continue action.
-- A dedicated visual design for this state is out of scope; it should remain simple, legible, and accessible.
+- Render the visible message `Results are unavailable.` inside `<main>`.
+- Do not render the Continue action.
+- Do not announce stale score content.
+- Log a descriptive error during development when practical.
+- Keep the fallback simple, legible, and accessible.
+- A dedicated branded fallback design is outside scope.
+
+Because validation occurs before the first score render, an `aria-live` region is not required for the initial fallback.
 
 ### 5.3 Button default state
 
 - Background: `#303B59`.
 - Text: white.
 - Cursor indicates interactivity where applicable.
-- The button remains visually stable with no layout movement.
+- Dimensions remain stable.
 
 ### 5.4 Button hover state
 
 On devices that support hover:
 
-- Replace the navy background with the Figma result gradient:
+- Replace the navy fill with:
   `linear-gradient(180deg, #7755FF 0%, #2F2CE9 100%)`.
-- Gate the hover treatment with `(hover: hover)` and `(pointer: fine)`, or an equivalent capability check.
-- Do not rely on hover to reveal required information.
+- Gate the style with `(hover: hover)` or an equivalent capability query.
+- Do not reveal required information only on hover.
 
 ### 5.5 Button pressed state
 
-During pointer or keyboard activation:
+During native activation:
 
 - Retain the gradient treatment.
-- Provide immediate state feedback without changing dimensions or moving surrounding content.
-- A scale or translation effect is not required and should not be added by default.
+- Provide immediate visual feedback.
+- Do not change button dimensions.
+- Do not scale or translate the button by default.
 
 ### 5.6 Button focus-visible state
 
-- Show a visible `3px` outline using `#1125D6`.
+- Show a visible `3px` outline using `#1125D6` in normal color modes.
 - Use an outline offset of at least `3px`.
-- The focus ring must remain visible whether the button is navy or gradient-filled.
-- Do not remove the browser focus indicator unless the custom replacement is active.
-- Focus and hover styles must be able to coexist.
+- Preserve enough surrounding space that the ring is not clipped.
+- The ring remains visible with navy or gradient fill.
+- Focus and hover styles can coexist.
+- Do not remove the browser focus indicator unless the custom focus-visible replacement is active.
+- In forced-colors mode, allow system colors to preserve button boundary and focus visibility.
 
 ### 5.7 Motion
 
 - No animation is required.
-- Any optional color transition shall be subtle, no longer than `150ms`, and not required to understand state.
-- Optional transitions shall be removed or minimized when `prefers-reduced-motion: reduce` is active.
+- An optional color transition may be no longer than `150ms`.
+- Transitions must not communicate required state by motion alone.
+- Remove or minimize optional transitions for `prefers-reduced-motion: reduce`.
 
 ### 5.8 States not required
 
-Because the data is imported at build time and the design defines no such states, the initial scope does not require:
+The initial scope does not require:
 
 - Loading skeleton
 - Async loading state
+- Network error state
 - Disabled button
 - Button loading state
 - Empty category state
-- Network error state
-- Success confirmation after Continue
+- Success confirmation
+- Navigation result after Continue
 
 ---
 
 ## 6. Accessibility requirements
 
-### 6.1 Semantic structure
+### 6.1 Document and semantic structure
 
-- The page shall contain one `<main>` landmark.
-- `Your Result` shall be the page's `<h1>`.
-- `Summary` shall be an `<h2>`.
-- The category scores shall use a semantic description list:
-  - One `<dl>` for the collection
+- `<html>` shall declare `lang="en"`.
+- The document shall have a meaningful `<title>`.
+- The page shall contain exactly one `<main>` landmark.
+- The result heading shall be the page `<h1>`.
+- The summary heading shall be an `<h2>`.
+- Category results shall use one semantic description list:
+  - One `<dl>` collection
   - One grouping element per category
   - `<dt>` for the category label
   - `<dd>` for the score
-- The Continue action shall use a native button.
-- Do not add interactive roles to non-interactive category rows.
+- The Continue action shall be a native button.
+- Category rows shall not receive interactive roles.
 
 ### 6.2 Accessible score output
 
-- The overall score shall expose the phrase `76 out of 100` as one accessible unit.
-- Each category score shall expose a phrase such as `Reaction, 80 out of 100` through normal semantics or an accessible label.
-- Visually separated number fragments must not cause duplicate or confusing screen-reader announcements.
-- The visual slash and maximum may be hidden from assistive technology when an equivalent complete accessible phrase is provided.
+- The overall score shall expose `76 out of 100` as one accessible unit for the default data.
+- Each category shall expose its label and complete score, for example `Reaction, 80 out of 100`.
+- Visual fragments shall not cause duplicate screen-reader announcements.
+- A valid approach may use visually hidden complete text and hide visual fragments from assistive technology, or an equally clear semantic solution.
+- Do not place an `aria-label` on a non-interactive container when ordinary text semantics provide a clearer solution.
 
 ### 6.3 Icons
 
-- Category icons are decorative because the visible category label provides the same meaning.
-- SVGs or images shall use `aria-hidden="true"` or empty alternative text as appropriate.
-- Icons shall not receive keyboard focus.
-- The row must remain understandable if an icon is unavailable.
+- Category icons are decorative because the visible labels provide their meaning.
+- Icon images shall use empty alternative text; inline SVGs shall use `aria-hidden="true"` and remain unfocusable.
+- Icons shall not enter the tab order.
+- Missing icons shall not remove the visible category label.
 
 ### 6.4 Color and contrast
 
-- Normal-sized text shall meet at least `4.5:1` contrast against its rendered background.
-- Large text shall meet at least `3:1` contrast.
-- Focus indication shall meet at least `3:1` contrast against adjacent colors.
-- `Your Result` shall use solid white rather than the lower-contrast lavender shown in Figma.
-- The comparison message may use `#CAC9FF` because it sits in the darker lower region of the result gradient; the rendered implementation must still verify a ratio of at least `4.5:1` at its actual position.
-- The maximum-score text inside the darker score circle may use `#CAC9FF`.
-- Category labels shall use the accessible colors defined in section 3.4.
-- Category row maximum-score text shall use solid `#5F677B`, not a reduced-opacity navy.
-- Category icons may retain the brighter Figma colors because the text label provides the information.
+- Normal-sized meaningful text shall meet at least `4.5:1` against its rendered background.
+- Large meaningful text shall meet at least `3:1`.
+- Focus indication and meaningful non-text boundaries shall meet at least `3:1` against adjacent colors.
+- The result heading shall use white.
+- Category labels shall use the accessible colors in section 3.4.
+- Category maximum-score text shall use solid `#5F677B`.
+- Bright category icon colors may remain because the visible label carries meaning.
+- The comparison message and score maximum may use `#CAC9FF` only after contrast is verified at their actual gradient positions.
+- If a gradient-position check fails, lighten the affected foreground while preserving hierarchy.
 - Information shall never be communicated by color alone.
 
-### 6.5 Keyboard and input
+### 6.5 Keyboard and pointer input
 
-- The only interactive element in the current component is the Continue button.
-- It shall be reachable using `Tab`.
-- It shall activate using `Enter` and `Space` according to native button behavior.
-- Focus order shall follow visual and DOM reading order.
-- The target shall be at least `44 × 44px`; the specified `56px` height exceeds this minimum.
+- The Continue button is the only interactive element in the current component.
+- It shall be reachable with `Tab`.
+- It shall activate with `Enter` and `Space` through native button behavior.
+- Focus order shall match DOM and visual order.
+- The target shall be at least `44 × 44px`; the design uses at least `56px` height.
+- Focus shall not be fully obscured by another element.
 - No action shall require a fine pointer or hover.
 
-### 6.6 Reflow, zoom, and text resizing
+### 6.6 Reflow and zoom
 
-- At `320px` width, all content shall remain readable without horizontal page scrolling.
-- At `200%` browser zoom, the layout shall reflow rather than overlap or clip.
-- Text shall not be truncated to preserve Figma's fixed heights.
-- Long words shall wrap safely rather than force horizontal overflow.
-- Score values shall remain visually distinguishable at increased text size.
+- At `320px` viewport width, content shall remain readable without horizontal page scrolling.
+- At `400%` browser zoom from a `1280px`-wide viewport, the effective layout shall reflow without overlap, clipping, or horizontal page scrolling.
+- At `200%` zoom at common desktop sizes, content shall remain usable and reachable.
+- Fixed Figma heights shall yield to content.
+- Long words shall wrap safely.
+- Score phrases shall remain distinguishable at increased text size.
 
-### 6.7 Fonts and user preferences
+### 6.7 Text-spacing overrides
 
-- Provide a system sans-serif fallback after Hanken Grotesk.
-- The layout shall remain usable while the web font loads or if it fails.
-- Respect `prefers-reduced-motion` for any optional transitions.
-- In forced-colors mode, preserve a visible button boundary and focus indicator.
+The component shall remain usable when user styles apply at least:
+
+- Line height: `1.5` times the font size
+- Paragraph spacing: `2` times the font size
+- Letter spacing: `0.12em`
+- Word spacing: `0.16em`
+
+Under these overrides:
+
+- No text shall clip or overlap.
+- Category rows and card sections shall grow.
+- The button label shall remain visible.
+- All content shall remain reachable.
+
+### 6.8 Fonts and user preferences
+
+- Load Hanken Grotesk locally.
+- Use `font-display: swap` or equivalent visible-text behavior.
+- Provide a system sans-serif fallback.
+- Font fallback shall not cause clipped content.
+- Respect `prefers-reduced-motion`.
+- Preserve visible boundaries and focus in forced-colors mode.
 
 ---
 
@@ -467,112 +569,145 @@ Because the data is imported at build time and the design defines no such states
 
 ### 7.1 Numeric boundaries
 
-- Scores of `0` and `100` must fit inside the score circle and category rows.
-- Three-digit values must not overflow their containers.
+- Overall and category scores of `0` and `100` must fit.
+- Three-digit `100` values must not overflow.
 - Use tabular numerals when supported.
-- Decimal, negative, infinite, `NaN`, or over-maximum values are invalid and trigger the fallback.
+- Decimal, negative, infinite, `NaN`, or over-100 values are invalid.
+- A maximum score other than `100` is invalid.
 
 ### 7.2 Content expansion
 
-- Longer result headings, ratings, comparison text, category labels, and action labels shall wrap without overlap.
-- Category score phrases shall remain on one line when possible.
-- If a category label requires multiple lines, its row shall grow beyond `56px` rather than clip the text.
-- The result overview, summary panel, and composite card shall expand vertically when required.
-- The two columns in wide layout shall remain equal in resulting height.
+- Longer headings, rating, comparison text, labels, and action copy shall wrap without overlap.
+- Category score phrases shall remain on one line.
+- If a category label wraps, its row shall grow beyond `56px`.
+- The result overview, summary panel, and card shall expand vertically.
+- Wide columns shall remain equal in resulting height.
+- Text expansion shall not clip the focus ring.
 
-### 7.3 Category count
+### 7.3 Category schema
 
-- The required dataset contains four categories.
-- The rendering logic shall tolerate a different positive category count without clipping; the list and card shall grow naturally.
-- An empty category array is invalid and triggers the fallback.
-- Unknown or duplicate category identifiers are invalid.
+- Exactly four validated categories render.
+- Empty, partial, reordered, duplicated, or unknown category collections are invalid.
+- Invalid category data triggers the complete fallback.
+- Rendering still uses one reusable row-rendering path.
 
 ### 7.4 Viewport constraints
 
 - Very short viewports shall scroll vertically.
-- The wide card must not become inaccessible because of vertical centering.
-- Large desktop viewports shall not stretch the card beyond `736px`.
-- Narrow viewports shall not show pale page gutters around the full-width result section.
+- Safe centering shall not make content unreachable.
+- Large viewports shall not stretch the card beyond `736px`.
+- Narrow viewports shall not show pale gutters around the full-width result panel.
+- The `700px` switch shall not create overlap or a horizontal scrollbar.
 
 ### 7.5 Asset and font failure
 
-- Icon dimensions shall be reserved to avoid layout shift.
-- A missing icon shall not remove the visible category name.
-- Font fallback shall not cause clipped text or fixed-height overflow.
+- Icon dimensions shall remain reserved.
+- A missing icon shall not remove category meaning.
+- A failed web font shall fall back without clipped content.
+- Production shall not depend on temporary Figma URLs or paths outside the application runtime root.
 
 ### 7.6 Interaction integration
 
-- Multiple rapid activations shall invoke the supplied Continue handler once per native activation.
-- In the default demo with no handler, activation shall have no destructive side effect.
-- The button must not accidentally submit a surrounding form.
+- One native activation invokes the supplied callback once.
+- Multiple deliberate activations invoke it once each.
+- With no callback, activation has no destructive side effect.
+- The button shall not submit a surrounding form.
 
 ### 7.7 Localization boundary
 
 - The first release is English and left-to-right.
-- The layout shall tolerate moderate English text expansion.
-- Full localization, pluralization, and right-to-left design are outside the initial scope.
+- Moderate English text expansion is supported.
+- Full localization, plural rules, and right-to-left layout are outside scope.
 
 ---
 
 ## 8. Acceptance criteria
 
-Unless a criterion specifies another range, reference-frame geometry may differ by up to `4px` because of browser and font rendering. Tablet column proportions may differ by up to `8px` from the Figma frame when necessary to keep the responsive layout simple and resilient.
+Unless a criterion specifies otherwise, reference-frame geometry may differ by up to `4px` because of browser and font rendering. Tablet column proportions may differ by up to `8px` when needed for a simple resilient grid.
 
-### 8.1 Content and data
+### 8.1 Build, assets, and data
 
-- **AC-01:** The page displays the Figma content values: overall `76`, Reaction `80`, Memory `92`, Verbal `61`, and Visual `73`.
-- **AC-02:** The visible action label is `Continue`; no visible `Label` placeholder remains.
-- **AC-03:** All visible result content is generated from one structured local JSON data source.
-- **AC-04:** Category rows are generated by iterating over the category array in source order.
-- **AC-05:** The overall score remains `76` and is not recalculated as `76.5` or rounded to `77`.
-- **AC-06:** Invalid data displays `Results are unavailable.`, hides the score UI and Continue action, and does not display partial results.
+- **AC-01:** `pnpm build` succeeds from `frontend/`.
+- **AC-02:** TypeScript JSON-module resolution is enabled and the local JSON import type-checks.
+- **AC-03:** The imported JSON is passed through runtime validation before score markup is rendered.
+- **AC-04:** Runtime font and icon assets are served or imported from inside `frontend/`.
+- **AC-05:** No production asset is loaded from a temporary Figma MCP URL.
+- **AC-06:** Design-source files under `docs/design/` remain available as references and are not the application’s runtime dependency.
 
-### 8.2 Mobile visual and responsive behavior
+### 8.2 Content and validation
 
-- **AC-07:** At `375 × 809`, the result overview spans the full viewport width, begins at the top, and has square top corners with `32px` rounded bottom corners.
-- **AC-08:** At `375px`, the result overview is approximately `356px` high with the default content and the score circle is `140px`.
-- **AC-09:** At `375px`, the summary content has approximately `30px` side gutters and a `24px` gap below the result overview.
-- **AC-10:** Below `700px`, the page background is white and the result and summary regions are stacked.
-- **AC-11:** At `320px`, the page has no horizontal scrollbar and no label, score, or button content overlaps.
+- **AC-07:** The default page displays overall `76`, Reaction `80`, Memory `92`, Verbal `61`, and Visual `73`.
+- **AC-08:** The visible action label is `Continue`; no visible `Label` placeholder remains.
+- **AC-09:** Visible content is generated from one local JSON object.
+- **AC-10:** Category rows are generated by iterating over the validated array in source order.
+- **AC-11:** The overall score remains `76` and is not recalculated to `76.5` or `77`.
+- **AC-12:** A maximum score other than `100` triggers the fallback.
+- **AC-13:** A missing, duplicate, unknown, reordered, or additional category triggers the fallback.
+- **AC-14:** Invalid data displays `Results are unavailable.`, hides the complete score UI, and hides Continue.
 
-### 8.3 Tablet and desktop visual behavior
+### 8.3 Mobile visual and responsive behavior
 
-- **AC-12:** At `768 × 1080`, the component is a centered two-column card approximately `686–688px` wide and `512px` high with the default content.
-- **AC-13:** At `1440 × 1080`, the centered card is `736 × 512px` with two approximately `368px` columns.
-- **AC-14:** At wide sizes, the outer card is white, has a `32px` radius, and uses the specified soft blue shadow.
-- **AC-15:** At wide sizes, the score circle is `200px` and the summary content is approximately `269px` wide at `768px` and `288px` at the desktop maximum.
-- **AC-16:** The card does not grow wider than `736px` on large screens.
-- **AC-17:** When content becomes taller than `512px`, the card expands without clipping and the page permits normal vertical scrolling.
+- **AC-15:** At `375 × 809`, the result overview spans the viewport width, begins at the top, and has square top corners with `32px` bottom corners.
+- **AC-16:** At `375px`, the result overview is approximately `356px` high with default content and uses a `140px` score circle.
+- **AC-17:** At `375px`, the summary has approximately `30px` side gutters and a `24px` gap below the result overview.
+- **AC-18:** Below `700px`, the page background is white and the two regions are stacked.
+- **AC-19:** The mobile result panel uses the specified soft blue shadow.
+- **AC-20:** At `320px`, no content overlaps and the page has no horizontal scrollbar.
 
-### 8.4 Typography, color, and assets
+### 8.4 Breakpoint, tablet, and desktop behavior
 
-- **AC-18:** Hanken Grotesk loads from local repository assets in weights `500`, `700`, and `800`, with a working sans-serif fallback.
-- **AC-19:** The result panel and score circle use the two specified vertical gradients.
-- **AC-20:** The four category rows use the specified pale backgrounds and provided local icons.
-- **AC-21:** Category labels use the accessible colors in section 3.4, category maximum-score text uses solid `#5F677B`, and decorative icons retain the brighter Figma colors.
-- **AC-22:** `Your Result` is white and all meaningful text meets the required contrast ratio at its rendered position.
-- **AC-23:** No production asset is loaded from a temporary Figma MCP URL.
+- **AC-21:** At `699px`, the component uses the mobile composition without horizontal overflow.
+- **AC-22:** At `700px`, the component switches to a two-column card without overlap or an inaccessible jump.
+- **AC-23:** At `701px`, the component remains a stable two-column card.
+- **AC-24:** At `768 × 1080`, the card is centered, approximately `686–688px` wide, and `512px` high with default content.
+- **AC-25:** At `1440 × 1080`, the card is `736 × 512px` with two approximately `368px` columns.
+- **AC-26:** Wide cards are white, have a `32px` radius, and use the specified shadow.
+- **AC-27:** Wide result and summary content are centered within their columns for the default dataset.
+- **AC-28:** At wide sizes, the score circle is `200px`.
+- **AC-29:** Summary content is approximately `269px` wide at `768px` and `288px` at the desktop maximum.
+- **AC-30:** The card never grows wider than `736px`.
+- **AC-31:** Content taller than `512px` expands the card and remains reachable through normal page scrolling.
 
-### 8.5 Interaction behavior
+### 8.5 Typography, color, and assets
 
-- **AC-24:** The Continue control is a native `type="button"` element with a minimum height of `56px`.
-- **AC-25:** On hover-capable devices, hovering changes the button from navy to the result gradient.
-- **AC-26:** Pressing the button retains clear gradient feedback without changing layout dimensions.
-- **AC-27:** Keyboard focus displays the specified `3px` blue focus ring with visible offset.
-- **AC-28:** The button activates with both `Enter` and `Space`.
-- **AC-29:** A supplied Continue handler is invoked once for each activation; without a handler, the page does not reload, navigate, or submit.
+- **AC-32:** Hanken Grotesk loads locally in the required `500`, `700`, and `800` weights, or through one variable file covering those weights.
+- **AC-33:** Font loading uses visible-text behavior and a working sans-serif fallback.
+- **AC-34:** The result panel and score circle use the specified gradients.
+- **AC-35:** The four rows use the specified pale backgrounds and exact local category icons.
+- **AC-36:** Category labels use the accessible colors in section 3.4.
+- **AC-37:** Category maximum-score text uses solid `#5F677B`.
+- **AC-38:** The result heading is white.
+- **AC-39:** All meaningful text meets the required contrast at its actual rendered position.
 
-### 8.6 Accessibility and resilience
+### 8.6 Interaction behavior
 
-- **AC-30:** The page contains one `<main>`, one `<h1>` for `Your Result`, and one `<h2>` for `Summary`.
-- **AC-31:** Category scores use one `<dl>` containing one grouped `<dt>` and `<dd>` pair per category.
-- **AC-32:** Screen readers receive `76 out of 100` as one coherent score phrase and receive each category label with its complete score.
-- **AC-33:** Decorative icons are ignored by assistive technology and do not receive focus.
-- **AC-34:** At `200%` browser zoom, no content overlaps, clips, or requires horizontal page scrolling.
-- **AC-35:** At short viewport heights, all content remains reachable through normal vertical scrolling.
-- **AC-36:** The button has an accessible name, visible focus state, and a target size of at least `44 × 44px`.
-- **AC-37:** Optional transitions respect `prefers-reduced-motion`.
-- **AC-38:** In forced-colors mode, the Continue button and its focus indicator remain visually identifiable.
+- **AC-40:** Continue is a native `type="button"` element with at least `56px` height.
+- **AC-41:** On hover-capable devices, hover changes the fill from navy to the result gradient.
+- **AC-42:** Pressing retains clear gradient feedback without changing layout dimensions.
+- **AC-43:** Keyboard focus shows a `3px` blue ring with at least `3px` offset in normal color modes.
+- **AC-44:** The focus ring is not clipped and remains visible while the button is hovered.
+- **AC-45:** Continue activates with `Enter` and `Space`.
+- **AC-46:** A supplied callback runs once per activation; without one, the page does not submit, reload, or navigate.
+
+### 8.7 Semantics and assistive technology
+
+- **AC-47:** The document declares English and has a meaningful title.
+- **AC-48:** The page contains exactly one `<main>`, one `<h1>` for the result heading, and one `<h2>` for the summary heading.
+- **AC-49:** Category scores use one `<dl>` with one grouped `<dt>` and `<dd>` pair per category.
+- **AC-50:** Screen readers receive `76 out of 100` as one coherent phrase without duplicate score fragments.
+- **AC-51:** Screen readers receive each category label with its complete score.
+- **AC-52:** Decorative icons are ignored by assistive technology and do not receive focus.
+- **AC-53:** Continue has an accessible name and native button semantics.
+
+### 8.8 Reflow and user preferences
+
+- **AC-54:** At `400%` zoom from a `1280px` viewport, content reflows without overlap, clipping, or horizontal page scrolling.
+- **AC-55:** At short viewport heights, all content remains reachable through normal vertical scrolling.
+- **AC-56:** Applying the specified text-spacing overrides causes containers to grow rather than clip or overlap.
+- **AC-57:** Optional transitions respect `prefers-reduced-motion`.
+- **AC-58:** In forced-colors mode, Continue and its focus indicator remain identifiable.
+- **AC-59:** If an icon fails, its category remains understandable and the row layout remains stable.
+- **AC-60:** If Hanken Grotesk fails, fallback text remains readable without clipping.
 
 ---
 
@@ -581,7 +716,7 @@ Unless a criterion specifies another range, reference-frame geometry may differ 
 The first implementation does not include:
 
 - Backend or remote API integration
-- Authentication or user-specific persistence
+- Authentication or persistence
 - Editing scores
 - Charts or score history
 - Loading skeletons
@@ -590,4 +725,4 @@ The first implementation does not include:
 - Multiple result cards on one page
 - Full internationalization or right-to-left support
 - Dark theme
-- Navigation destination after Continue
+- A destination or success state after Continue
