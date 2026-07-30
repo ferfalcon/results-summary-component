@@ -39,6 +39,7 @@ The project is a single-page Vite application implemented with semantic HTML, Ty
 | Data delivery | Import local JSON at build time; no loading state is required |
 | Invalid data | Render a safe fallback instead of partial or misleading scores |
 | Contrast failures | Apply the accessible color exceptions defined in this document |
+| Secondary score text | Use a solid accessible color instead of Figma's 50%-opacity navy |
 
 ---
 
@@ -196,6 +197,12 @@ The rendered comparison sentence shall be:
 
 The darker label colors are intentional accessibility deviations from Figma. The original brighter colors remain on decorative icons to preserve category identity.
 
+Across every category row:
+
+- The achieved score shall use `#303B59`.
+- The slash and maximum score shall use solid `#5F677B`.
+- The maximum score must not use Figma's `50%` opacity treatment, which does not provide sufficient contrast on the pale row backgrounds.
+
 ---
 
 ## 4. Responsive rules
@@ -349,8 +356,8 @@ On devices that support hover:
 
 - Replace the navy background with the Figma result gradient:
   `linear-gradient(180deg, #7755FF 0%, #2F2CE9 100%)`.
+- Gate the hover treatment with `(hover: hover)` and `(pointer: fine)`, or an equivalent capability check.
 - Do not rely on hover to reveal required information.
-- Do not apply hover behavior through a media query on touch-only devices.
 
 ### 5.5 Button pressed state
 
@@ -425,7 +432,8 @@ Because the data is imported at build time and the design defines no such states
 - `Your Result` shall use solid white rather than the lower-contrast lavender shown in Figma.
 - The comparison message may use `#CAC9FF` because it sits in the darker lower region of the result gradient; the rendered implementation must still verify a ratio of at least `4.5:1` at its actual position.
 - The maximum-score text inside the darker score circle may use `#CAC9FF`.
-- Category text shall use the accessible label colors defined in section 3.4.
+- Category labels shall use the accessible colors defined in section 3.4.
+- Category row maximum-score text shall use solid `#5F677B`, not a reduced-opacity navy.
 - Category icons may retain the brighter Figma colors because the text label provides the information.
 - Information shall never be communicated by color alone.
 
@@ -508,6 +516,8 @@ Because the data is imported at build time and the design defines no such states
 
 ## 8. Acceptance criteria
 
+Unless a criterion specifies another range, reference-frame geometry may differ by up to `4px` because of browser and font rendering. Tablet column proportions may differ by up to `8px` from the Figma frame when necessary to keep the responsive layout simple and resilient.
+
 ### 8.1 Content and data
 
 - **AC-01:** The page displays the Figma content values: overall `76`, Reaction `80`, Memory `92`, Verbal `61`, and Visual `73`.
@@ -532,14 +542,14 @@ Because the data is imported at build time and the design defines no such states
 - **AC-14:** At wide sizes, the outer card is white, has a `32px` radius, and uses the specified soft blue shadow.
 - **AC-15:** At wide sizes, the score circle is `200px` and the summary content is approximately `269px` wide at `768px` and `288px` at the desktop maximum.
 - **AC-16:** The card does not grow wider than `736px` on large screens.
-- **AC-17:** When content becomes taller than `512px`, the card expands without clipping and remains vertically scrollable.
+- **AC-17:** When content becomes taller than `512px`, the card expands without clipping and the page permits normal vertical scrolling.
 
 ### 8.4 Typography, color, and assets
 
 - **AC-18:** Hanken Grotesk loads from local repository assets in weights `500`, `700`, and `800`, with a working sans-serif fallback.
 - **AC-19:** The result panel and score circle use the two specified vertical gradients.
 - **AC-20:** The four category rows use the specified pale backgrounds and provided local icons.
-- **AC-21:** Category labels use the accessible colors in section 3.4; decorative icons retain the brighter Figma colors.
+- **AC-21:** Category labels use the accessible colors in section 3.4, category maximum-score text uses solid `#5F677B`, and decorative icons retain the brighter Figma colors.
 - **AC-22:** `Your Result` is white and all meaningful text meets the required contrast ratio at its rendered position.
 - **AC-23:** No production asset is loaded from a temporary Figma MCP URL.
 
@@ -555,7 +565,7 @@ Because the data is imported at build time and the design defines no such states
 ### 8.6 Accessibility and resilience
 
 - **AC-30:** The page contains one `<main>`, one `<h1>` for `Your Result`, and one `<h2>` for `Summary`.
-- **AC-31:** Category scores use semantic description-list markup or an equivalently strong key-value structure approved during review.
+- **AC-31:** Category scores use one `<dl>` containing one grouped `<dt>` and `<dd>` pair per category.
 - **AC-32:** Screen readers receive `76 out of 100` as one coherent score phrase and receive each category label with its complete score.
 - **AC-33:** Decorative icons are ignored by assistive technology and do not receive focus.
 - **AC-34:** At `200%` browser zoom, no content overlaps, clips, or requires horizontal page scrolling.
