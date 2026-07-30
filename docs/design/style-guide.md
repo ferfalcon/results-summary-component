@@ -26,8 +26,6 @@ The designs were created to the following widths:
 - Violet blue (circle): hsla(256, 72%, 46%, 1)
 - Persian blue (circle): hsla(241, 72%, 46%, 0)
 
-
-
 ### Neutral
 
 - White: hsl(0, 0%, 100%)
@@ -49,5 +47,3 @@ Use transparency to get the color variations necessary to match the design. Hint
 
 - Family: [Hanken Grotesk](https://fonts.google.com/specimen/Hanken+Grotesk)
 - Weights: 500, 700, 800
-
-> 💎 [Upgrade to Pro](https://www.frontendmentor.io/pro?ref=style-guide) for design file access to see all design details and get hands-on experience using a professional workflow with tools like Figma.
