@@ -2,9 +2,11 @@
 
 ## Document status
 
-This document captures the visual and UX definition of the Results Summary component. It is based primarily on the Figma file and is intended to guide later specification, implementation, and review work.
+This document captures the visual and UX definition of the Results Summary component. It is based primarily on the Figma file and guides specification, implementation planning, and visual review.
 
-The Figma file is the visual source of truth when it conflicts with older screenshots, starter markup, or challenge data. This document describes design intent and known constraints; it is not an implementation plan.
+The Figma file is the visual source of truth for the original design. `SPEC.md` records the production decisions needed where Figma is incomplete, ambiguous, or not WCAG-compliant. Accessibility corrections documented here and in `SPEC.md` intentionally override the affected Figma colors or states.
+
+This document describes design intent. Functional requirements and testable behavior belong in `SPEC.md`.
 
 ### Design sources
 
@@ -14,8 +16,8 @@ The Figma file is the visual source of truth when it conflicts with older screen
   - Mobile: `375 × 809`
   - Tablet: `768 × 1080`
   - Desktop: `1440 × 1080`
-- Repository design assets: `docs/design/`
-- Typeface: Hanken Grotesk, supplied in the repository
+- Source design assets: `docs/design/`
+- Typeface: Hanken Grotesk
 
 ---
 
@@ -29,10 +31,10 @@ Its UX goals are to:
 - Communicate the qualitative meaning of the result.
 - Let users compare individual category scores without scanning a dense table.
 - Provide one clear next action.
-- Preserve the same information hierarchy across mobile, tablet, and desktop layouts.
-- Remain usable and legible across the full responsive range, not only at the three Figma reference widths.
+- Preserve the same content hierarchy across mobile, tablet, and desktop.
+- Remain usable and legible throughout the responsive range, not only at the three Figma reference widths.
 
-The experience is informational rather than analytical. The visual treatment should feel positive, lightweight, and focused. The gradient result panel is the emotional focal point; the summary list provides the factual detail.
+The experience is informational rather than analytical. The gradient result panel is the emotional focal point; the summary list provides the factual detail.
 
 ---
 
@@ -53,13 +55,13 @@ The composition contains:
 1. **Result overview**
 2. **Summary panel**
 
-On tablet and desktop, both regions form a single horizontal card. On mobile, they become vertically stacked sections with different outer treatments.
+On tablet and desktop, both regions form one horizontal card. On mobile, they become vertically stacked sections with different outer treatments.
 
 ### 2.3 Result overview
 
 The result overview is the primary visual region and contains:
 
-1. “Your Result” eyebrow/title
+1. “Your Result” heading
 2. Circular score display
    - Current score: `76`
    - Maximum score: `of 100`
@@ -69,7 +71,7 @@ The result overview is the primary visual region and contains:
 
 The result overview uses a vertical purple-to-blue gradient, centered text, and a second translucent gradient inside the circular score display.
 
-The overall score is the strongest visual element. The rating is the secondary emphasis. The descriptive message is supporting content and should not compete with the score.
+The overall score is the strongest visual element. The rating is the secondary emphasis. The comparison message is supporting content and should not compete with the score.
 
 ### 2.4 Summary panel
 
@@ -86,17 +88,29 @@ The summary panel contains:
 Each category row contains:
 
 - A category-specific icon
-- A category label
+- A visible category label
 - The achieved value
-- A visually de-emphasized `/ 100` maximum
+- A visually secondary `/ 100` maximum
 
-The rows share the same structure, height, and radius, while their foreground and background colors communicate category identity.
+The rows share the same structure, minimum height, radius, and spacing. Category identity is reinforced by icon and color, never by color alone.
 
 ### 2.5 Primary action
 
-The button is a full-width pill within the summary panel. Its Figma component includes a default navy state and a gradient “Active” variant.
+The button is a full-width pill within the summary panel.
 
-The visible screen instances currently contain the placeholder text `Label`, while the underlying text layer is named `Continue`. Final copy is unresolved and must be confirmed before implementation.
+The Figma screen instances display the placeholder `Label`, while the text layer is named `Continue`. The production copy is resolved as **Continue**.
+
+The Figma button component includes:
+
+- Default: navy background
+- Active: purple-to-blue result gradient
+
+The production mapping is resolved as:
+
+- Resting state: navy
+- Hover state: gradient on hover-capable devices
+- Pressed state: gradient
+- Keyboard focus: separate visible focus ring that can coexist with either fill
 
 ---
 
@@ -112,11 +126,11 @@ The visible screen instances currently contain the placeholder text `Label`, whi
 | Summary column | `368 × 512` |
 | Summary content width | `288` |
 | Card radius | `32` |
-| Page positioning | Horizontally and vertically centered |
+| Page position | Horizontally and vertically centered |
 
-The desktop composition is symmetrical at the column level. The summary content has approximately `40px` of space on both sides.
+The desktop composition is symmetrical at the column level. The summary content has approximately `40px` of inline space on both sides.
 
-The outer white card receives the shadow. The result panel overlaps no content; it occupies the complete left half and has a `32px` radius on all corners.
+The outer white card receives the shadow. The result panel occupies the full left column and has a `32px` radius on all corners.
 
 ### 3.2 Tablet reference
 
@@ -129,11 +143,11 @@ The outer white card receives the shadow. The result panel overlaps no content; 
 | Summary content width | approximately `269` |
 | Horizontal page margin | `41` |
 | Card radius | `32` |
-| Page positioning | Horizontally and vertically centered |
+| Page position | Horizontally and vertically centered |
 
 The tablet layout retains the horizontal composition. It compresses both columns while preserving the result panel height, score circle size, typography, row height, and button height.
 
-The fractional width in the Figma frame is a resizing artifact, not a design token. Production behavior should preserve the visual proportions without reproducing values such as `268.717px`.
+The fractional summary width in Figma is a resizing artifact, not a production token. Implementation should preserve the visual proportions without reproducing values such as `268.717px`.
 
 ### 3.3 Mobile reference
 
@@ -151,12 +165,13 @@ The mobile composition differs structurally from tablet and desktop:
 - It starts at the top of the viewport.
 - The result panel spans the full viewport width.
 - The result panel has square top corners and `32px` bottom corners.
-- The summary panel is not enclosed in a shared white card.
+- The result panel receives the soft blue shadow.
+- The summary is not enclosed in a shared outer card.
 - The score circle and typography scale down.
 - The page background is white.
 - The action remains full width inside the summary section.
 
-This mobile behavior must not be implemented as a simple desktop card that merely changes `flex-direction`.
+This mobile behavior is not simply the desktop card with a different flex direction.
 
 ---
 
@@ -164,9 +179,16 @@ This mobile behavior must not be implemented as a simple desktop card that merel
 
 ### 4.1 General behavior
 
-The component should be responsive from at least `320px` wide through large desktop screens.
+The component must work from at least `320px` wide through large desktop screens.
 
-The three Figma frames are reference snapshots, not hard viewport contracts. The layout should interpolate cleanly between them.
+The three Figma frames are reference snapshots, not hard viewport contracts. Layout should interpolate cleanly between them.
+
+The implementation breakpoint is resolved in `SPEC.md` at `700px`:
+
+- Below `700px`: mobile composition
+- At `700px` and above: tablet/desktop card composition
+
+This breakpoint is an implementation decision derived from the space required by the two columns; it is not an explicit Figma token.
 
 ### 4.2 Narrow screens
 
@@ -174,45 +196,42 @@ At narrow widths:
 
 - The result and summary sections stack vertically.
 - The result section remains full bleed.
-- The summary section uses stable side padding and fills the available width.
-- Text may wrap naturally without clipping.
-- Category labels and values must remain readable without overlapping.
+- The summary section uses fluid side gutters and fills the available width.
+- Text wraps naturally without clipping.
+- Category labels and values remain readable without overlapping.
+- Score phrases remain aligned to the trailing edge.
 - The button fills the summary content width.
 - The component uses natural document flow rather than vertical centering.
+- The page scrolls normally on short viewports.
 
-At `375px`, the summary width is `315px`, equivalent to `30px` side margins. At `320px`, those margins may reduce to maintain adequate content width, but should not fall below a practical mobile gutter.
+At `375px`, the summary width is `315px`, equivalent to `30px` side margins. At `320px`, the margins reduce fluidly but remain at least `24px`.
 
 ### 4.3 Wide screens
 
-Once there is sufficient horizontal space:
+At `700px` and above:
 
-- The component switches to a two-column card.
-- The card is centered within the page.
-- Both sections retain a `512px` reference height.
+- The component becomes a two-column white card.
+- The card is safely centered when it fits in the viewport.
+- Both sections use `512px` as the default visual height.
+- Both columns stretch to the same resulting height.
+- The result and summary content are centered within their columns for the default content.
 - The result section stays visually dominant.
-- The composite card should not exceed the `736px` desktop reference width.
-- The summary content remains centered within its column.
-- The pale blue page background becomes visible around the card.
+- The composite card never exceeds `736px`.
+- The pale blue page background is visible around the card.
+- The card and page expand and scroll when content no longer fits the reference height.
 
-### 4.4 Breakpoint uncertainty
+### 4.4 Height and overflow
 
-Figma demonstrates stacked behavior at `375px` and horizontal behavior at `768px`, but it does not define the exact transition point.
-
-The switch should occur when the component can no longer preserve two readable columns, rather than being chosen only because a conventional device breakpoint exists. A component or container-width threshold is preferred conceptually.
-
-The exact breakpoint belongs in `SPEC.md` after testing the design through intermediate widths.
-
-### 4.5 Height and overflow
-
-The Figma desktop and tablet cards use a fixed `512px` reference height. That height works for the supplied English content, but the production layout must tolerate:
+The Figma desktop and tablet cards use a fixed `512px` reference height. That height works for the supplied English content, but production must tolerate:
 
 - Browser zoom
-- Larger user text settings
-- Localized or longer copy
-- Unexpected category labels
-- Dynamic content
+- User text enlargement
+- WCAG text-spacing overrides
+- Moderate English copy expansion
+- Unexpected wrapping
+- Font fallback
 
-Content must not be clipped to preserve the reference height. The reference height should be treated as the default visual target, with natural expansion allowed when content requires it.
+Content must not be clipped to preserve the reference height. The reference height is a default target, not a maximum.
 
 ---
 
@@ -226,7 +245,9 @@ Content must not be clipped to preserve the reference height. The reference heig
   - `700` — Bold
   - `800` — ExtraBold
 - Letter spacing: `0`
-- The local repository font assets should be preferred over a runtime dependency on an external font service.
+- Local repository font files are the source assets.
+- Production should use a local runtime copy and a system sans-serif fallback.
+- Text must remain visible during font loading.
 
 ### 5.2 Type styles
 
@@ -235,11 +256,11 @@ Content must not be clipped to preserve the reference height. The reference heig
 | Display Large | `72px` | `100%` | `800` | Score on tablet and desktop |
 | Display Medium | `56px` | `100%` | `800` | Score on mobile |
 | Heading Large | `32px` | `130%` | `700` | “Great” on tablet and desktop |
-| Heading Medium | `24px` | `130%` | `700` | Desktop/tablet headings; mobile “Great” |
-| Body Large Strong | `18px` | `130%` | `700` | Desktop/tablet labels, values, and button |
-| Body Large Default | `18px` | `130%` | `500` | Desktop/tablet supporting copy and labels |
+| Heading Medium | `24px` | `130%` | `700` | Wide headings; mobile “Great” |
+| Body Large Strong | `18px` | `130%` | `700` | Wide labels, values, and button |
+| Body Large Default | `18px` | `130%` | `500` | Wide supporting copy and labels |
 | Body Medium Strong | `16px` | `130%` | `700` | Mobile values and maximum score |
-| Body Medium Default | `16px` | `130%` | `500` | Mobile supporting copy and category labels |
+| Body Medium Default | `16px` | `130%` | `500` | Mobile supporting copy and labels |
 
 ### 5.3 Responsive type mapping
 
@@ -249,19 +270,19 @@ Content must not be clipped to preserve the reference height. The reference heig
 | Score | `56px / 800` | `72px / 800` |
 | “of 100” | `16px / 700` | `18px / 700` |
 | Rating | `24px / 700` | `32px / 700` |
-| Supporting message | `16px / 500` | `18px / 500` |
+| Comparison message | `16px / 500` | `18px / 500` |
 | “Summary” | `18px / 700` | `24px / 700` |
 | Category label | `16px / 500` | `18px / 500` |
-| Category value | `16px / 700` | `18px / 700` |
+| Category score | `16px / 700` | `18px / 700` |
 | Button label | `18px / 700` | `18px / 700` |
 
-The score should use tabular numerals when available so changing values do not create distracting width shifts.
+Scores should use tabular numerals when available so changing values do not create distracting width shifts.
 
 ---
 
 ## 6. Colors
 
-### 6.1 Semantic palette
+### 6.1 Figma palette
 
 | Role | Figma token | Value |
 |---|---|---|
@@ -270,56 +291,60 @@ The score should use tabular numerals when available so changing values do not c
 | Primary dark text and button | `colors/navy/950` | `#303B59` |
 | Result supporting text | `colors/navy/200` | `#CAC9FF` |
 | Reaction background | `colors/red/50` | `#FFF6F6` |
-| Reaction foreground | `colors/red/400` | `#FF5555` |
+| Reaction accent | `colors/red/400` | `#FF5555` |
 | Memory background | `colors/yellow/50` | `#FFFBF4` |
-| Memory foreground | `colors/yellow/400` | `#FFB21E` |
+| Memory accent | `colors/yellow/400` | `#FFB21E` |
 | Verbal background | `colors/green/50` | `#F2FCF9` |
-| Verbal foreground | `colors/green/500` | `#00BB8F` |
+| Verbal accent | `colors/green/500` | `#00BB8F` |
 | Visual background | `colors/blue/50` | `#F3F4FD` |
-| Visual foreground | `colors/blue/800` | `#1125D6` |
+| Visual accent | `colors/blue/800` | `#1125D6` |
 
-### 6.2 Result gradient
+### 6.2 Production accessibility colors
 
-The result panel uses a vertical gradient:
+The following intentional deviations preserve the design’s category identity while meeting normal-text contrast requirements:
+
+| Role | Production value |
+|---|---|
+| Result heading | `#FFFFFF` |
+| Reaction label | `#C93838` |
+| Memory label | `#8A5A00` |
+| Verbal label | `#007A5E` |
+| Visual label | `#1125D6` |
+| Achieved category score | `#303B59` |
+| Category slash and maximum | `#5F677B` at solid opacity |
+
+The brighter Figma category colors remain on decorative icons. The `/ 100` category text must not use Figma’s 50%-opacity navy because it does not meet the required contrast.
+
+### 6.3 Result gradient
 
 ```css
 linear-gradient(180deg, #7755ff 0%, #2f2ce9 100%)
 ```
 
-### 6.3 Score gradient
-
-The circular score display uses a vertical gradient that fades to transparency:
+### 6.4 Score gradient
 
 ```css
 linear-gradient(180deg, #4d21c9 0%, rgb(37 33 201 / 0%) 100%)
 ```
 
-### 6.4 Shadow
-
-The desktop/tablet outer card and the mobile result panel use:
+### 6.5 Shadow
 
 ```css
 box-shadow: 0 30px 60px rgb(61 108 236 / 15%);
 ```
 
-The shadow should remain soft and low contrast. It supports separation without making the card feel elevated like a modal.
+The shadow belongs to:
 
-### 6.5 Contrast risks
+- The composite white card on tablet and desktop
+- The full-width result panel on mobile
 
-The category foreground colors are visually faithful to Figma but do not all meet WCAG contrast requirements for normal-sized text against their pale row backgrounds.
+It should remain soft and low contrast.
 
-Approximate contrast ratios:
+### 6.6 Remaining contrast verification
 
-| Category | Approximate ratio |
-|---|---:|
-| Reaction | `2.96:1` |
-| Memory | `1.75:1` |
-| Verbal | `2.36:1` |
-| Visual | `8.48:1` |
+The comparison message and score maximum use `#CAC9FF` over gradient backgrounds. Their exact rendered positions must be checked in the browser because contrast changes along the gradient.
 
-Reaction, Memory, and Verbal require a design decision before implementation. Possible directions include darkening those foreground colors or using navy text while retaining the category color for the icon.
-
-The lavender result text also varies in contrast across the gradient. On the lighter upper portion, mobile-sized text is at risk of insufficient contrast. This must be validated against the rendered gradient, not only one endpoint.
+If either rendered combination falls below the required ratio, the foreground must be lightened without changing layout or hierarchy.
 
 ---
 
@@ -346,99 +371,97 @@ The design follows an 8px base rhythm.
 ### 7.2 Key component spacing
 
 - Icon to category label: `8px`
-- Score value to `/ 100`: `8px`
-- Gap between summary rows: `16px`
+- Achieved score to `/ 100`: `8px`
+- Gap between category rows: `16px`
 - Result content gap on mobile: `24px`
 - Mobile rating-to-message gap: `8px`
-- Summary heading-to-list group: `32px` on tablet/desktop
-- Major result content gap: `32px` on tablet/desktop
-- Summary horizontal inset: approximately `40px` on tablet/desktop
+- Summary major gap on mobile: `24px`
+- Summary major gap on tablet/desktop: `32px`
+- Result major gap on tablet/desktop: `32px`
+- Summary inline inset: approximately `40px` at desktop maximum
 - Mobile summary side inset at `375px`: `30px`
-- Row left inset: `8px`
-- Row right inset: `16px`
-- Button horizontal inset: `16px`
+- Minimum mobile side inset: `24px`
+- Row leading inset: `8px`
+- Row trailing inset: `16px`
+- Button inline inset: `16px`
 
-### 7.3 Fixed dimensions used as visual anchors
+### 7.3 Visual anchor dimensions
 
-- Category row height: `56px`
-- Button height: `56px`
+- Category row minimum height: `56px`
+- Button minimum height: `56px`
 - Category row radius: `12px`
 - Main card/result radius: `32px`
-- Button radius: `128px`
+- Button radius: pill shape (`128px` in Figma)
 - Desktop/tablet score circle: `200px`
 - Mobile score circle: `140px`
 
-These values define the design’s rhythm and silhouette. Text containers, however, should not be constrained to fixed heights if doing so causes overflow.
+These values define the design’s rhythm and silhouette. Content containers must grow if required by text or accessibility settings.
 
 ---
 
 ## 8. Imagery and icons
 
-The interface contains no photographic or illustrative imagery. Its visual identity comes from typography, gradients, color, and four small category icons.
+The interface contains no photography or illustration. Its identity comes from typography, gradients, color, and four category icons.
 
 ### 8.1 Category icons
-
-The icon set contains:
 
 - Reaction — lightning bolt
 - Memory — brain
 - Verbal — speech bubble
 - Visual — eye
 
-The source SVG assets are available in `docs/design/images/`.
+The exact source SVGs are available in `docs/design/images/`.
 
 ### 8.2 Icon treatment
 
-- Icons sit inside an approximately `31 × 32px` layout box.
+- Icons sit inside an approximately `32 × 32px` reserved layout box.
 - The visible glyphs are smaller and centered inside that box.
-- Each icon uses the foreground color of its category.
-- Icons are supporting cues; the adjacent text label carries the semantic meaning.
-- Icons should be rendered from the provided assets rather than redrawn.
-- Because the category name is already visible, icons should normally be hidden from assistive technology.
+- Each icon uses its bright Figma category accent.
+- Icons support the visible label rather than replacing it.
+- Icons should use exact copies of the provided SVG assets.
+- Icons are decorative for assistive technology.
+- Missing icons must not remove category meaning or collapse row spacing.
 
-No icon should be used as the only identifier for a score category.
+The design-source files under `docs/design/` should be copied into the application’s runtime asset area during implementation rather than referenced as temporary Figma URLs.
 
 ---
 
 ## 9. Interaction states
 
-### 9.1 Default button
+### 9.1 Default
 
 - Background: `#303B59`
 - Text: white
-- Height: `56px`
+- Minimum height: `56px`
 - Shape: pill
-- Label: unresolved; Figma instances currently show `Label`
+- Label: `Continue`
 
-### 9.2 Figma “Active” variant
+### 9.2 Hover
 
-The button component includes an `Active` variant using the same purple-to-blue gradient as the result panel.
+On hover-capable devices:
 
-The file does not define whether “Active” means:
+- Background changes to the result gradient.
+- Dimensions and layout remain unchanged.
+- Hover reveals no required information.
 
-- Hover
-- Pressed
-- Selected
-- Keyboard focus
-- A generic interactive state
+### 9.3 Pressed
 
-There are no prototype reactions that resolve this ambiguity.
+- The gradient remains visible during activation.
+- No scale or translation is required.
+- The state must not move surrounding content.
 
-The repository also contains an `active-states.jpg` reference, but Figma remains the primary source. The state mapping should be confirmed in `SPEC.md`.
+### 9.4 Keyboard focus
 
-### 9.3 Required interaction behavior
+- Use a visible `3px` outline in `#1125D6`.
+- Use at least `3px` outline offset.
+- The ring must remain visible with either navy or gradient fill.
+- Focus and hover may coexist.
 
-Regardless of the final state mapping:
+### 9.5 Motion
 
-- The control must be a native button.
-- Hover must be visually distinguishable on devices that support hover.
-- Keyboard focus must be clearly visible and must not rely only on the background color change.
-- Pressed state should provide immediate feedback without moving surrounding layout.
-- The target area must remain at least the full `56px` button height.
-- Disabled and loading states are not represented in Figma and are not currently required.
-- No motion is required by the design.
+No motion is required. Optional color transitions must be subtle, short, and removable through `prefers-reduced-motion`.
 
-A focus indicator may require an accessibility addition not shown in Figma. It should be visually compatible with the component and visible against both white and pale blue surroundings.
+Disabled, loading, and success states are outside the current design scope.
 
 ---
 
@@ -446,83 +469,99 @@ A focus indicator may require an accessibility addition not shown in Figma. It s
 
 ### 10.1 Structure and semantics
 
-The visual hierarchy should map to meaningful document structure:
-
-- The component belongs inside a page landmark such as `<main>`.
-- “Your Result” should function as the primary component heading.
-- “Summary” should be a subordinate heading.
-- The category collection should use semantic grouped content, such as a list or description list.
-- The primary action must use a native `<button>`.
-- Decorative icons should use empty alternative text or `aria-hidden="true"`.
-
-The score should be announced as one coherent phrase, for example “76 out of 100,” rather than as disconnected text fragments.
+- The page uses one main landmark.
+- “Your Result” is the primary page heading.
+- “Summary” is a subordinate heading.
+- Category results use semantic key-value grouping.
+- The Continue action is a native button.
+- Decorative icons are hidden from assistive technology.
+- The overall score is announced as one coherent phrase, such as “76 out of 100.”
+- Each category is announced with its label and complete score.
 
 ### 10.2 Color and contrast
 
-- Information is not communicated by color alone because every category includes an icon and text label.
-- Reaction, Memory, and Verbal label colors have known contrast failures against their row backgrounds.
-- Lavender text on the result gradient requires validation, especially at the top of the gradient and at mobile type sizes.
-- The navy button and white label have strong contrast.
-- Focus indication must meet contrast requirements against adjacent colors.
+- Meaning is never communicated by color alone.
+- Production category label colors use the accessible values in section 6.2.
+- The category maximum score uses solid `#5F677B`.
+- “Your Result” uses white instead of Figma lavender.
+- Gradient text combinations are verified at their actual rendered positions.
+- Focus indication meets non-text contrast requirements.
 
-### 10.3 Reflow and text scaling
+### 10.3 Reflow and text adjustment
 
-The component must remain usable:
+The component remains usable:
 
 - At `320px` viewport width
-- At `200%` browser zoom
+- At `400%` browser zoom when the effective CSS viewport is approximately `320px`
 - With increased text size
-- With longer content
+- With WCAG text-spacing overrides
+- With moderate English content expansion
+- On short landscape viewports
 
-Text must not clip, overlap scores, or force horizontal scrolling. Fixed Figma heights must yield to content when necessary.
+Text must not clip, overlap, or create horizontal page scrolling. Fixed Figma heights yield to content.
 
 ### 10.4 Interaction and input
 
-- The action must support keyboard activation.
-- The focus order should follow the visual reading order.
-- The button target is already comfortably larger than the common `44 × 44px` minimum.
-- Hover styling must not be required to understand or operate the interface.
-- No interaction depends on a fine pointer.
+- The button supports native keyboard activation.
+- Focus order follows DOM and visual reading order.
+- The button target exceeds `44 × 44px`.
+- Hover is never required.
+- No action depends on a fine pointer.
+- The focus indicator remains visible in forced-colors mode.
 
-### 10.5 Motion
+### 10.5 Document and user preferences
 
-The design contains no required animation. Any later transitions should respect `prefers-reduced-motion` and must not be necessary to understand state.
+- The document language is English.
+- The page has a meaningful title.
+- Text remains visible while the local font loads.
+- A system sans-serif fallback is available.
+- Optional transitions respect reduced-motion preferences.
 
 ---
 
-## 11. Assumptions and uncertainties
+## 11. Decisions, assumptions, and remaining uncertainties
 
-| Topic | Current understanding | Required follow-up |
-|---|---|---|
-| Source of truth | Figma overrides older starter assets and markup | Maintain this rule during review |
-| Visual category value | Figma shows Visual as `73`; older material may show `72` | Use `73` unless product data defines otherwise |
-| Button copy | Instances show `Label`; layer name suggests `Continue` | Confirm final copy |
-| Button `Active` variant | Gradient state exists but its trigger is undefined | Define hover, pressed, and focus behavior in `SPEC.md` |
-| Responsive switch | Stacked at `375px`, horizontal at `768px` | Test intermediate widths and define the threshold |
-| Tablet widths | Slightly asymmetric columns and fractional content width | Preserve intent, not fractional measurements |
-| Overall score | Category average is `76.5`, while the displayed score is `76` | Treat total score as independent data unless a flooring rule is confirmed |
-| Contrast remediation | Three category labels fail normal-text contrast | Decide whether accessibility may adjust Figma colors |
-| Result lavender text | Contrast changes across the gradient | Validate rendered positions and adjust if needed |
-| Dynamic content | Figma uses fixed English strings | Define length constraints and overflow behavior |
-| Data states | Loading, error, empty, and partial states are absent | Confirm whether the component only renders complete data |
-| Disabled action | No disabled variant exists | Add only if product behavior requires it |
-| Mobile bottom space | The `809px` frame contains `779px` of designed content | Treat remaining space as viewport context, not component padding |
-| Figma row component | Repeated values are overridden manually rather than exposed as properties | Code should use a data-driven row model |
-| Figma variables | Variables use a generic collection and broad scopes | Normalize names and scopes when translating to code tokens |
+### 11.1 Resolved production decisions
+
+| Topic | Resolution |
+|---|---|
+| Source of truth | Figma defines original visuals; documented accessibility corrections override affected visual values |
+| Visual category value | Use `73` for Visual |
+| Action copy | Use `Continue` |
+| Button Active variant | Map to hover and pressed; use a separate focus ring |
+| Responsive switch | Use `700px` |
+| Overall score | Store independently; do not derive it from category average |
+| Maximum score | First release uses exactly `100` |
+| Category labels | Use darker accessible production colors |
+| Category maximum text | Use solid `#5F677B` |
+| Result heading | Use white |
+| Data state | Render complete valid data or a simple unavailable fallback; no loading state |
+| Disabled action | Not required |
+| Mobile bottom space | Treat the remaining frame space as viewport context, not component padding |
+| Runtime assets | Copy exact source assets into the application runtime asset area |
+
+### 11.2 Remaining implementation verification
+
+- Confirm the chosen `700px` switch visually at `699px`, `700px`, and `701px`.
+- Verify `#CAC9FF` contrast at the actual comparison-message and score-maximum positions.
+- Confirm font metrics using the local Hanken Grotesk file and the system fallback.
+- Confirm that text-spacing overrides do not break the `512px` reference height or row alignment.
+- Define the future navigation or callback behavior after Continue; the current project only exposes the button.
+- The invalid-data fallback has no Figma visual and should remain intentionally simple.
 
 ---
 
 ## 12. Design guardrails
 
-Later specifications and implementation work should preserve these non-negotiable characteristics:
+Later implementation work must preserve these characteristics:
 
 - The result score remains the strongest visual element.
-- Mobile uses a full-width top result panel with rounded bottom corners.
+- Mobile uses a full-width top result panel with rounded bottom corners and shadow.
 - Tablet and desktop use one centered, two-column white card.
 - The result panel retains its vertical purple-to-blue gradient.
-- The circular score display scales from `140px` on mobile to `200px` on wider layouts.
-- Summary rows remain consistent in height, radius, spacing, and information order.
+- The score circle changes from `140px` on mobile to `200px` on wider layouts.
+- Summary rows remain consistent in minimum height, radius, spacing, and information order.
 - Category identity is reinforced by icon and color, never color alone.
-- The primary action remains visually prominent and full width within the summary panel.
-- Accessibility corrections must be documented when they intentionally differ from Figma.
-- Figma measurements should be translated into resilient layout behavior rather than copied as absolute positioning.
+- The Continue action remains prominent and full width within the summary panel.
+- Accessibility deviations from Figma remain documented and intentional.
+- Figma measurements are translated into resilient layout behavior rather than copied as absolute positioning.
