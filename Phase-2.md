@@ -2,9 +2,9 @@
 
 ## Decision
 
-Create one closed, runtime-validated data boundary before rendering any Results Summary UI.
+Create one closed, runtime-validated data boundary before rendering Results Summary UI.
 
-The imported JSON is not trusted merely because TypeScript can import it. The application must accept only the complete approved schema or reject the entire object.
+The imported JSON is not trusted merely because TypeScript can import it. The application accepts only the complete approved schema or rejects the entire object.
 
 ## Objective
 
@@ -16,7 +16,8 @@ At completion:
 - A handwritten validator accepts `unknown` and returns a discriminated result.
 - Invalid values are rejected without mutation, clamping, reordering, or partial recovery.
 - Node’s built-in test runner covers valid boundaries and meaningful invalid cases.
-- `pnpm test` and `pnpm build` both pass.
+- The validator and every runtime module it imports are directly executable by Node’s TypeScript type-stripping runtime.
+- `pnpm test` and `pnpm build` pass.
 
 ## Prerequisites
 
@@ -25,6 +26,7 @@ Phase 1 is complete:
 - Node is `22.18.0` or newer.
 - `test: node --test` exists.
 - `resolveJsonModule` is enabled.
+- `allowImportingTsExtensions` remains enabled.
 - The current starter still builds.
 
 ## Read before editing
@@ -43,7 +45,7 @@ frontend/src/results-summary/validate-results-summary.ts
 frontend/tests/validate-results-summary.test.mjs
 ```
 
-Create the directories when they do not exist.
+Create directories when they do not exist.
 
 ## Out of scope
 
@@ -57,12 +59,13 @@ Do not:
 - Add a validation dependency
 - Add a DOM test environment
 - Recalculate the overall score from category scores
-- Accept arbitrary category order or arbitrary maximum scores
+- Accept arbitrary category order or maximum scores
 - Produce a partial valid object from invalid input
+- Introduce path aliases or package-style internal imports
 
 ## Required default data
 
-Create `frontend/src/data/results.json` with exactly this content model and values:
+Create `frontend/src/data/results.json` with exactly:
 
 ```json
 {
@@ -82,7 +85,7 @@ Create `frontend/src/data/results.json` with exactly this content model and valu
 }
 ```
 
-Do not add icon paths, CSS color names, prebuilt comparison text, or presentation metadata to JSON.
+Do not add icon paths, CSS colors, prebuilt comparison text, or presentation metadata to JSON.
 
 The comparison sentence is derived later from `percentile`.
 
@@ -101,7 +104,7 @@ export const SCORE_CATEGORY_IDS = [
 ] as const;
 ```
 
-Derive the ID type from the tuple rather than maintaining a separate string union:
+Derive the ID type from the tuple:
 
 ```ts
 export type ScoreCategoryId = (typeof SCORE_CATEGORY_IDS)[number];
@@ -114,18 +117,19 @@ This tuple is the shared source for:
 - Exhaustive icon mapping in Phase 3
 - Test fixtures
 
-### 2. Define the validated data types
+Do not maintain a second string union or validator-only category array.
+
+### 2. Define validated data types
 
 Define:
 
 ```text
 ScoreCategory
 ResultsSummaryData
-ValidationIssue or string issue representation
 ValidationResult
 ```
 
-The required shape is:
+Required shape:
 
 ```text
 ResultsSummaryData
@@ -161,7 +165,7 @@ Use a result equivalent to:
 { ok: false, issues: string[] }
 ```
 
-Issue strings should include useful field paths, for example:
+Issue strings include useful field paths, for example:
 
 ```text
 score must be an integer from 0 through 100
@@ -171,9 +175,28 @@ actionLabel must contain non-whitespace text
 
 Do not throw for ordinary invalid content.
 
+## Node-compatible import contract
+
+The tests import the TypeScript validator directly with Node, not through Vite. Node does not apply `tsconfig.json` path resolution while stripping TypeScript types.
+
+Therefore:
+
+- The test imports the validator with an explicit `.ts` extension.
+- Every runtime import reached from the validator also uses an explicit relative `.ts` extension.
+- In particular, `validate-results-summary.ts` imports runtime values from `results-summary.model.ts` using a path equivalent to:
+
+```ts
+import { SCORE_CATEGORY_IDS } from "./results-summary.model.ts";
+```
+
+- Type-only imports also use explicit relative `.ts` paths when present.
+- No path alias, extensionless runtime import, directory import, or package export map is introduced.
+
+This contract is compatible with the existing `allowImportingTsExtensions` setting and must be tested with `pnpm test`, not assumed.
+
 ## Validator requirements
 
-Create `validate-results-summary.ts` with one exported public function:
+Create `validate-results-summary.ts` with one public function:
 
 ```text
 validateResultsSummary(value: unknown): ValidationResult
@@ -199,7 +222,7 @@ These values must be strings containing at least one non-whitespace character:
 - `actionLabel`
 - Every category `label`
 
-Do not silently trim and replace source values. Validation may use `trim()` to test emptiness, but valid returned data should reflect the original validated strings.
+Validation may use `trim()` to test emptiness, but returned valid strings preserve the original source value.
 
 ### Numeric validation
 
@@ -219,7 +242,7 @@ Reject:
 - `Infinity`
 - `-Infinity`
 
-`maximumScore` must be the integer literal `100`. Any other value is invalid.
+`maximumScore` must be the integer literal `100`.
 
 ### Category validation
 
@@ -229,31 +252,31 @@ Reject:
 - Contain exactly four entries
 - Contain non-null objects
 - Use each approved ID exactly once
-- Use the exact order from `SCORE_CATEGORY_IDS`
+- Use exact `SCORE_CATEGORY_IDS` order
 - Contain no unknown or duplicate IDs
 
-Do not sort or reorder valid-looking input. Wrong order is invalid.
+Do not sort or repair wrong-order input.
 
 ### Object shape behavior
 
-The specification requires the required fields. A strict unknown-property rejection is not required unless implemented consistently and documented.
+Required fields must be present. Strict rejection of unknown extra properties is not required unless implemented consistently and documented.
 
-Do not spend this phase building a generic schema engine. Use small, readable helpers specialized to this object.
+Do not build a generic schema engine. Use small helpers specialized to this object.
 
 ### Mutation rules
 
 The validator must not:
 
-- Modify the input object
+- Modify input
 - Replace invalid values
 - Clamp numbers
 - Round decimals
 - Trim returned strings
-- Add missing categories
+- Add categories
 - Reorder categories
 - Derive score values
 
-Use a type assertion only after all corresponding runtime checks have passed.
+Use a type assertion only after corresponding runtime checks succeed.
 
 ## Test task
 
@@ -268,95 +291,92 @@ import test from "node:test";
 import assert from "node:assert/strict";
 ```
 
-Import the TypeScript validator with an explicit `.ts` relative path. Do not use a Vite alias.
+Import the validator through an explicit relative `.ts` path.
 
-Read and parse the real JSON fixture from disk. Resolve paths relative to `import.meta.url` so tests do not depend on the caller’s current working directory.
+Read and parse the real JSON fixture from disk. Resolve paths relative to `import.meta.url`, not the caller’s working directory.
 
 Do not duplicate the complete default object as the primary fixture.
 
-Use `structuredClone()` or an equivalent clear clone strategy before changing fixture variants.
+Use `structuredClone()` or an equally clear clone strategy before changing fixture variants.
 
 ### Required success tests
 
-Test that validation succeeds for:
+Validation succeeds for:
 
-- The actual `results.json` file
+- Actual `results.json`
 - Overall score `0`
 - Overall score `100`
-- Each category score boundary `0`
-- Each category score boundary `100`
+- Category score `0`
+- Category score `100`
 - Percentile `0`
 - Percentile `100`
 
-Confirm the returned data preserves:
+Confirm default returned data preserves:
 
-- Overall score `76` for the default fixture
-- Maximum score `100`
-- Visual score `73`
+- Overall `76`
+- Maximum `100`
+- Visual `73`
 - Approved category order
-- `Continue` action label
+- `Continue`
 
-### Required root and text failure tests
+### Required root and text failures
 
 Test rejection of:
 
 - `null`
 - Array root
-- Primitive root values
-- Missing `resultHeading`
-- Missing another required root field
-- Blank or whitespace-only `resultHeading`
-- Blank `rating`
-- Blank `summaryHeading`
-- Blank `actionLabel`
+- Primitive root
+- Missing required root field
+- Blank or whitespace-only result heading
+- Blank rating
+- Blank summary heading
+- Blank action label
 - Blank category label
 
-### Required numeric failure tests
+### Required numeric failures
 
 Test rejection of:
 
-- `maximumScore` equal to 99 or another non-100 value
+- Maximum other than 100
 - Negative overall score
-- Overall score greater than 100
+- Overall score above 100
 - Decimal overall score
-- Numeric-string overall score
-- `NaN` overall score supplied programmatically
-- Infinite overall score supplied programmatically
-- Category score outside range
+- Numeric-string score
+- Programmatic `NaN`
+- Programmatic infinity
+- Out-of-range category score
 - Decimal category score
 - Percentile below 0
 - Percentile above 100
 - Decimal percentile
 
-### Required category failure tests
+### Required category failures
 
 Test rejection of:
 
-- Missing `categories`
-- Non-array `categories`
+- Missing categories
+- Non-array categories
 - Empty categories
 - Three categories
 - Five categories
-- Duplicate category ID
-- Unknown category ID
-- Missing required category ID
+- Duplicate ID
+- Unknown ID
+- Missing required ID
 - Correct IDs in wrong order
-- Non-object category entry
+- Non-object category
 - Category missing `id`, `label`, or `score`
 
 ### Test quality rules
 
-- Give each test a behavior-focused name.
-- Test public validator behavior, not private helper implementation.
-- Do not make tests depend on issue-array ordering unless ordering is a deliberate contract.
-- When checking errors, prefer confirming the relevant field path or message fragment.
+- Use behavior-focused names.
+- Test the public validator, not private helpers.
+- Avoid depending on issue-array ordering unless deliberately specified.
+- Check relevant field-path or message fragments.
 - Keep tests deterministic and DOM-free.
 
 ## Execution sequence
 
 ### 1. Create directories
-
-From the repository root:
 
 ```bash
 mkdir -p frontend/src/data
@@ -364,31 +384,33 @@ mkdir -p frontend/src/results-summary
 mkdir -p frontend/tests
 ```
 
-### 2. Add the model and validator
+### 2. Add model, then validator
 
-Implement the model first, then the validator. Keep modules small and focused.
+Use explicit `.ts` extensions for runtime internal imports that Node will execute.
 
-### 3. Add the actual JSON fixture
+### 3. Add valid JSON
 
-Validate that the file contains no trailing comments or non-JSON syntax.
+Ensure no comments or non-JSON syntax.
 
-### 4. Add tests
+### 4. Add tests and run them frequently
 
-Run frequently from `frontend/`:
+From `frontend/`:
 
 ```bash
 pnpm test
 ```
 
-### 5. Run the application build
+A module-resolution failure is a task failure. Do not work around it by moving tests into Vite.
+
+### 5. Run application build
 
 ```bash
 pnpm build
 ```
 
-The Vite starter remains the rendered UI in this phase, but TypeScript must type-check the new modules.
+The Vite starter remains rendered, but TypeScript checks new modules.
 
-### 6. Inspect the diff
+### 6. Inspect diff
 
 ```bash
 git status --short
@@ -397,29 +419,33 @@ git diff -- frontend/src/data frontend/src/results-summary frontend/tests
 
 ## Stop conditions
 
-Stop and resolve before proceeding when:
+Stop and revise before proceeding when:
 
-- Node cannot import the `.ts` validator under the declared runtime.
+- Node cannot import the validator or its model dependency.
+- An internal runtime import is extensionless.
 - Passing tests require non-erasable TypeScript syntax.
-- A path alias is required by the test setup.
+- A path alias is required.
 - A validation dependency appears necessary only because the validator became over-generalized.
-- `pnpm build` fails because strict TypeScript options were relaxed or bypassed.
+- Strict TypeScript options are relaxed or bypassed.
 
-Do not silently switch test frameworks. Revise `PLAN.md` explicitly if the chosen runtime strategy proves invalid.
+Do not silently switch test frameworks. Revise `PLAN.md` explicitly if the runtime strategy proves invalid.
 
 ## Verification checklist
 
-- [ ] Default JSON exactly matches the approved content.
-- [ ] Overall score is stored independently.
-- [ ] `maximumScore` is fixed to 100.
-- [ ] Category order has one shared runtime tuple.
-- [ ] ID type is derived from the tuple.
+- [ ] Default JSON matches approved content.
+- [ ] Overall score is independent.
+- [ ] Maximum is fixed to 100.
+- [ ] Category order has one runtime tuple.
+- [ ] ID type derives from the tuple.
 - [ ] Validator accepts `unknown`.
 - [ ] Validator returns a discriminated result.
-- [ ] Invalid data is rejected as a complete object.
+- [ ] Invalid data is rejected completely.
 - [ ] Validator does not mutate or repair input.
 - [ ] Field-path issues are descriptive.
-- [ ] Tests read the actual JSON fixture.
+- [ ] Test imports validator with `.ts` extension.
+- [ ] Validator runtime imports use explicit `.ts` extensions.
+- [ ] No path alias exists in the Node execution path.
+- [ ] Tests read actual JSON.
 - [ ] Valid numeric boundaries are tested.
 - [ ] Invalid root, text, number, and category cases are tested.
 - [ ] Tests use Node’s built-in runner.
@@ -429,19 +455,19 @@ Do not silently switch test frameworks. Revise `PLAN.md` explicitly if the chose
 
 ## Acceptance criteria advanced
 
-- AC-03 — imported data is runtime-validated before score markup is later rendered
-- AC-07 — approved default values exist
-- AC-08 — action data is `Continue`
-- AC-09 — visible content has one future local JSON source
-- AC-10 — category source order is defined
+- AC-03 — runtime validation exists
+- AC-07 — approved default values
+- AC-08 — action data is Continue
+- AC-09 — one local JSON source
+- AC-10 — category source order
 - AC-11 — overall score is not recalculated
-- AC-12 — non-100 maximum is rejected
-- AC-13 — invalid category collections are rejected
-- AC-14 — invalid-data behavior is enabled for Phase 4 integration
+- AC-12 — non-100 maximum rejected
+- AC-13 — invalid category collections rejected
+- AC-14 — fallback integration enabled for Phase 4
 
 ## Deliverable
 
-A complete, tested, DOM-independent content model and runtime validator that accepts only the approved Results Summary schema.
+A complete, tested, DOM-independent content model and validator directly executable through the declared Node test runtime.
 
 ## Suggested commit
 
@@ -455,7 +481,7 @@ Phase 3 may import:
 
 - `ResultsSummaryData`
 - `ScoreCategoryId`
-- The validated category structure
-- The runtime icon assets copied in Phase 1
+- Validated category structure
+- Runtime icon assets
 
-Phase 3 must not duplicate category IDs, content values, or validation rules.
+It must not duplicate category IDs, values, or validation rules.
