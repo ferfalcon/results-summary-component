@@ -7,6 +7,9 @@
 - [Overview](#overview)
   - [The job](#the-job)
   - [Links](#links)
+- [Features](#features)
+- [Run locally](#run-locally)
+- [Project documentation](#project-documentation)
 - [My process](#my-process)
   - [Built with](#built-with)
   - [Useful resources](#useful-resources)
@@ -26,6 +29,48 @@ Users should be able to:
 
 - Repo URL: [https://github.com/ferfalcon/results-summary-component](https://github.com/ferfalcon/results-summary-component)
 - Live URL: [https://results-summary-component-ferfalcon.vercel.app/](https://results-summary-component-ferfalcon.vercel.app/)
+
+## Features
+
+- Mobile-first layout with a two-column card from `700px`
+- Local Hanken Grotesk font, category icons, and favicon
+- Content loaded from one local JSON file and checked by a runtime validator
+- Complete fallback UI when the data does not match the closed schema
+- Semantic headings, description-list score rows, coherent assistive text, and
+  a native keyboard-accessible button
+- Accessible colors, visible focus, forced-colors support, and resilient
+  content growth
+- Validator coverage with Node's built-in test runner
+
+## Run locally
+
+Node `22.18.0` or newer is required.
+
+```bash
+cd frontend
+pnpm install
+pnpm dev
+```
+
+Quality and production commands:
+
+```bash
+pnpm test
+pnpm build
+pnpm preview
+```
+
+## Project documentation
+
+- [Specification](SPEC.md)
+- [Design decisions](DESIGN.md)
+- [Implementation plan](PLAN.md)
+- [Review notes](REVIEW.md)
+- [Implementation and acceptance evidence](IMPLEMENTATION.md)
+
+The supplied Figma and `docs/design/` files are design references only; the
+production application does not load from them. Continue intentionally has no
+destination or success state in this first-release component.
 
 ## My process
 
@@ -47,6 +92,9 @@ pnpm dlx skills add GoogleChrome/modern-web-guidance
 ```
 - [Impeccable](https://impeccable.style/) - The missing design vocabulary for agents.
 - [](https://www.youtube.com/watch?v=r2P1v64pM28)
+
+
+
 
 ## Author
 
