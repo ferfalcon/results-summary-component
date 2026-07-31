@@ -1,0 +1,15 @@
+{
+  "resultHeading": "Your Result",
+  "score": 76,
+  "maximumScore": 100,
+  "rating": "Great",
+  "percentile": 65,
+  "summaryHeading": "Summary",
+  "actionLabel": "Continue",
+  "categories": [
+    { "id": "reaction", "label": "Reaction", "score": 80 },
+    { "id": "memory", "label": "Memory", "score": 92 },
+    { "id": "verbal", "label": "Verbal", "score": 61 },
+    { "id": "visual", "label": "Visual", "score": 73 }
+  ]
+}
