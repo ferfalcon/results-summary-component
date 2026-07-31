@@ -45,6 +45,8 @@ Users should be able to:
 ```bash
 pnpm dlx skills add GoogleChrome/modern-web-guidance
 ```
+- [Impeccable](https://impeccable.style/) - The missing design vocabulary for agents.
+- [](https://www.youtube.com/watch?v=r2P1v64pM28)
 
 ## Author
 
